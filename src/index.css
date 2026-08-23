@@ -1,0 +1,172 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-serif: 'Cinzel', serif;
+    --font-sans: 'Plus Jakarta Sans', sans-serif;
+
+    /* Global Dynamic Theme Variables */
+    --bg-primary: #0A1220;
+    --bg-secondary: #0B1526;
+    --color-primary: #C5A059;
+    --color-secondary: #182B4A;
+    --color-titles: #FFFFFF;
+    --color-text: #CBD5E1;
+    --color-buttons: #C5A059;
+    --color-button-text: #070D18;
+    --color-accent: #D4AF37;
+    --color-border: #1E293B;
+    --color-cards: #0F1C30;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--bg-primary, #0A1220);
+    color: var(--color-text, #CBD5E1);
+    overflow-x: hidden;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  /* Clear focus visible styling for keyboard accessibility */
+  a:focus-visible, 
+  button:focus-visible, 
+  input:focus-visible, 
+  select:focus-visible, 
+  textarea:focus-visible,
+  [tabindex="0"]:focus-visible {
+    outline: 2px solid var(--color-primary, #C5A059) !important;
+    outline-offset: 3px !important;
+  }
+
+  h1, h2, h3, h4, .font-heading {
+    font-family: var(--font-serif);
+    color: var(--color-titles, #FFFFFF);
+  }
+}
+
+/* Custom Design Tokens & Utility Classes */
+.font-cinzel {
+  font-family: 'Cinzel', serif;
+}
+
+.font-jakarta {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* Gold Gradient Effects */
+.gold-gradient-text {
+  background: linear-gradient(135deg, #F3E0AA 0%, #C5A059 50%, #9A7B38 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gold-border-gradient {
+  border-image: linear-gradient(135deg, #C5A059, #8F7238) 1;
+}
+
+.gold-glow {
+  box-shadow: 0 0 25px rgba(197, 160, 89, 0.15);
+  transition: box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gold-glow-hover:hover {
+  box-shadow: 0 0 35px rgba(197, 160, 89, 0.28);
+}
+
+/* Glassmorphism Subtle Dark Navy */
+.glass-panel {
+  background: rgba(16, 28, 48, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(197, 160, 89, 0.18);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0A1220;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #182B4A;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #C5A059;
+}
+
+/* Fluid Microinteractions & Animation Helpers */
+.hover-lift {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+}
+
+.hover-scale-sm {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hover-scale-sm:hover {
+  transform: scale(1.03);
+}
+
+.active-press:active {
+  transform: scale(0.97);
+}
+
+/* Custom Keyframes for Page Loading and Indeterminate Bar */
+@keyframes indeterminateBar {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(30%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-indeterminate-bar {
+  animation: indeterminateBar 1.5s infinite linear;
+  width: 50%;
+}
+
+/* Page Transition Effects */
+.page-fade-enter {
+  opacity: 0;
+  transform: translateY(4px);
+}
+.page-fade-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 250ms ease-out, transform 250ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+

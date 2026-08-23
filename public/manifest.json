@@ -1,0 +1,17 @@
+{
+  "short_name": "Jucélia Santana",
+  "name": "Jucélia Santana | Engenharia Civil",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512 192x192 64x64 32x32"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#121316",
+  "theme_color": "#121316",
+  "display": "standalone",
+  "orientation": "portrait",
+  "description": "Jucélia Santana Engenheira Civil - Soluções técnicas de excelência em engenharia estrutural, laudos, consultorias, gestão de obras e infraestrutura em Ariquemes - RO."
+}
