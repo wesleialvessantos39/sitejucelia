@@ -36,6 +36,58 @@ export interface BackupMetrics {
 }
 
 /**
+ * Helper central e único para chamadas à Supabase Edge Function do Google Drive.
+ * Garante envio do apikey, bearer token da sessão e validação estrita de Content-Type JSON.
+ * Rejeita respostas text/html (ex: fallback SPA da Vercel) e unifica tratamento de erros.
+ */
+export async function callGoogleDriveEdge<T = any>(
+  action: string,
+  options: {
+    method?: 'GET' | 'POST' | 'OPTIONS';
+    body?: any;
+    headers?: Record<string, string>;
+    queryParams?: Record<string, string>;
+  } = {}
+): Promise<T> {
+  const { data: { session } } = await supabase.auth.getSession();
+
+  const query = new URLSearchParams({
+    action,
+    ...(options.queryParams || {}),
+  });
+
+  const url = `${supabaseUrl}/functions/v1/google-drive-oauth?${query.toString()}`;
+
+  const requestHeaders: Record<string, string> = {
+    apikey: supabaseAnonKey,
+    ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+    ...(options.headers || {}),
+  };
+
+  if (session?.access_token) {
+    requestHeaders['Authorization'] = `Bearer ${session.access_token}`;
+  }
+
+  const response = await fetch(url, {
+    method: options.method || (options.body ? 'POST' : 'GET'),
+    headers: requestHeaders,
+    body: options.body ? (typeof options.body === 'string' ? options.body : JSON.stringify(options.body)) : undefined,
+  });
+
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    throw new Error(`Resposta inesperada do backend Google Drive (HTTP ${response.status}).`);
+  }
+
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(payload.error || payload.message || `Falha na operação do Google Drive (${action}).`);
+  }
+
+  return payload;
+}
+
+/**
  * Service de Gerenciamento de Backups e Infraestrutura (Supabase & Google Drive)
  * Preparado na Etapa 20.1 (Estrutura, RLS, Auditoria e Controle de Estado)
  */
@@ -536,7 +588,7 @@ export const backupService = {
   },
 
   /**
-   * Obtém a URL de autorização oficial do Google Drive via Supabase Edge Function ou Backend Local
+   * Obtém a URL de autorização oficial do Google Drive via Supabase Edge Function
    */
   async getGoogleDriveAuthUrl(adminId?: string, adminEmail?: string): Promise<{
     configured: boolean;
@@ -546,45 +598,21 @@ export const backupService = {
     message?: string;
   }> {
     try {
-      const edgeFunctionUrl = `${supabaseUrl}/functions/v1/google-drive-oauth?action=start&origin=${encodeURIComponent(window.location.origin)}`;
-
-      // Obtém o token JWT da sessão ativa do administrador
-      const { data: { session } } = await supabase.auth.getSession();
-      const headers: Record<string, string> = {
-        'apikey': supabaseAnonKey,
-      };
-      if (session?.access_token) {
-        headers['Authorization'] = `Bearer ${session.access_token}`;
-      }
-
-      // Tenta primeiro a Supabase Edge Function
-      try {
-        const edgeRes = await fetch(edgeFunctionUrl, {
-          method: 'GET',
-          headers,
-        });
-
-        if (edgeRes.ok) {
-          const edgeData = await edgeRes.json();
-          if (edgeData.configured && edgeData.url) {
-            return edgeData;
-          }
-        }
-      } catch (edgeErr) {
-        console.warn('[backupService] Edge Function indisponível, utilizando fallback local:', edgeErr);
-      }
-
-      // Fallback para backend local
-      const queryParams = new URLSearchParams({
-        admin_id: adminId || '',
-        admin_email: adminEmail || '',
+      const edgeData = await callGoogleDriveEdge<{
+        configured: boolean;
+        url?: string;
+        state?: string;
+        redirectUri?: string;
+        message?: string;
+      }>('start', {
+        queryParams: {
+          origin: window.location.origin,
+          admin_id: adminId || '',
+          admin_email: adminEmail || '',
+        },
       });
 
-      const res = await fetch(`/api/google-drive/auth-url?${queryParams.toString()}`);
-      if (!res.ok) {
-        throw new Error('Falha ao comunicar com o servidor de autorização.');
-      }
-      return await res.json();
+      return edgeData;
     } catch (err: any) {
       console.error('[backupService] Erro ao obter URL de autenticação Google Drive:', err);
       return {
@@ -608,51 +636,18 @@ export const backupService = {
     folder_healthy?: boolean;
   }> {
     try {
-      const edgeFunctionUrl = `${supabaseUrl}/functions/v1/google-drive-oauth?action=verify`;
-
-      const { data: { session } } = await supabase.auth.getSession();
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        'apikey': supabaseAnonKey,
-      };
-      if (session?.access_token) {
-        headers['Authorization'] = `Bearer ${session.access_token}`;
-      }
-
-      // Tenta primeiro a Supabase Edge Function
-      try {
-        const edgeRes = await fetch(edgeFunctionUrl, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({ admin_id: adminId, admin_email: adminEmail }),
-        });
-
-        if (edgeRes.ok) {
-          const edgeData = await edgeRes.json();
-          return edgeData;
-        }
-      } catch (edgeErr) {
-        console.warn('[backupService] Edge Function verify fallback:', edgeErr);
-      }
-
-      // Fallback para backend local
-      const res = await fetch('/api/google-drive/verify', {
+      const edgeData = await callGoogleDriveEdge('verify', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ admin_id: adminId, admin_email: adminEmail }),
+        body: { admin_id: adminId, admin_email: adminEmail },
       });
 
-      if (!res.ok) {
-        throw new Error('Erro na resposta do servidor de verificação.');
-      }
-
-      return await res.json();
+      return edgeData;
     } catch (err: any) {
       console.error('[backupService] Erro ao verificar Google Drive:', err);
       return {
         success: false,
         status: 'attention',
-        message: 'Não foi possível validar o status da conexão com o Google Drive.',
+        message: err.message || 'Não foi possível validar o status da conexão com o Google Drive.',
       };
     }
   },
@@ -665,58 +660,12 @@ export const backupService = {
     message?: string;
   }> {
     try {
-      const edgeFunctionUrl = `${supabaseUrl}/functions/v1/google-drive-oauth?action=disconnect`;
-
-      const { data: { session } } = await supabase.auth.getSession();
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        'apikey': supabaseAnonKey,
-      };
-      if (session?.access_token) {
-        headers['Authorization'] = `Bearer ${session.access_token}`;
-      }
-
-      // Tenta primeiro a Supabase Edge Function
-      try {
-        const edgeRes = await fetch(edgeFunctionUrl, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({ admin_id: adminId, admin_email: adminEmail }),
-        });
-
-        if (edgeRes.ok) {
-          const edgeData = await edgeRes.json();
-          // Atualiza configurações locais no banco também
-          const current = await this.getBackupSettings();
-          await this.updateBackupSettings(
-            {
-              ...current,
-              google_drive_connected: false,
-              google_drive_account_email: null,
-              google_drive_status: 'disconnected',
-              google_drive_error: null,
-            },
-            adminId,
-            adminEmail
-          );
-          return edgeData;
-        }
-      } catch (edgeErr) {
-        console.warn('[backupService] Edge Function disconnect fallback:', edgeErr);
-      }
-
-      // Fallback para backend local
-      const res = await fetch('/api/google-drive/disconnect', {
+      const edgeData = await callGoogleDriveEdge('disconnect', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ admin_id: adminId, admin_email: adminEmail }),
+        body: { admin_id: adminId, admin_email: adminEmail },
       });
 
-      if (!res.ok) {
-        throw new Error('Erro ao desconectar no servidor.');
-      }
-
-      // Atualiza via Supabase cliente
+      // Atualiza configurações locais no banco também
       const current = await this.getBackupSettings();
       await this.updateBackupSettings(
         {
@@ -730,7 +679,7 @@ export const backupService = {
         adminEmail
       );
 
-      return await res.json();
+      return edgeData;
     } catch (err: any) {
       console.error('[backupService] Erro ao desconectar Google Drive:', err);
       return {
@@ -755,63 +704,36 @@ export const backupService = {
     status?: string | null;
   }> {
     try {
-      const edgeFunctionUrl = `${supabaseUrl}/functions/v1/google-drive-oauth?action=status`;
+      const data = await callGoogleDriveEdge('status');
 
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const headers: Record<string, string> = {
-          'apikey': supabaseAnonKey,
-        };
-        if (session?.access_token) {
-          headers['Authorization'] = `Bearer ${session.access_token}`;
-        }
-
-        const edgeRes = await fetch(edgeFunctionUrl, {
-          method: 'GET',
-          headers,
-        });
-
-        if (edgeRes.ok) {
-          const data = await edgeRes.json();
-          if (data.configured) {
-            return {
-              configured: true,
-              connected: Boolean(data.connected),
-              redirectUri: `${supabaseUrl}/functions/v1/google-drive-oauth/callback`,
-              account_email: data.connection?.account_email || null,
-              folder_id: data.connection?.drive_folder_id || null,
-              folder_name: data.connection?.drive_folder_name || null,
-              status: data.connection?.status || (data.connected ? 'connected' : 'disconnected'),
-            };
-          }
-        }
-      } catch (e) {
-        // Ignora e tenta local
-      }
-
-      const res = await fetch('/api/google-drive/status');
-      if (res.ok) {
-        const localData = await res.json();
+      if (data.configured) {
         return {
-          configured: Boolean(localData.configured),
-          connected: Boolean(localData.connected),
-          redirectUri: localData.redirectUri || `${supabaseUrl}/functions/v1/google-drive-oauth/callback`,
-          account_email: localData.account_email || null,
-          folder_id: localData.folder_id || null,
-          folder_name: localData.folder_name || null,
-          status: localData.connected ? 'connected' : 'disconnected',
+          configured: true,
+          connected: Boolean(data.connected),
+          redirectUri: `${supabaseUrl}/functions/v1/google-drive-oauth/callback`,
+          account_email: data.connection?.account_email || null,
+          folder_id: data.connection?.drive_folder_id || null,
+          folder_name: data.connection?.drive_folder_name || null,
+          status: data.connection?.status || (data.connected ? 'connected' : 'disconnected'),
         };
       }
+
       return {
-        configured: true,
-        connected: false,
+        configured: Boolean(data.configured),
+        connected: Boolean(data.connected),
         redirectUri: `${supabaseUrl}/functions/v1/google-drive-oauth/callback`,
+        account_email: data.connection?.account_email || null,
+        folder_id: data.connection?.drive_folder_id || null,
+        folder_name: data.connection?.drive_folder_name || null,
+        status: data.connected ? 'connected' : 'disconnected',
       };
-    } catch (e) {
+    } catch (e: any) {
+      console.warn('[backupService] Erro ao consultar Edge Function status:', e);
       return {
         configured: true,
         connected: false,
         redirectUri: `${supabaseUrl}/functions/v1/google-drive-oauth/callback`,
+        status: 'disconnected',
       };
     }
   },
@@ -881,57 +803,20 @@ export const backupService = {
       };
     }
 
-    const edgeFunctionUrl = `${supabaseUrl}/functions/v1/google-drive-oauth?action=verify-file`;
-
-    const { data: { session } } = await supabase.auth.getSession();
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (session?.access_token) {
-      headers['Authorization'] = `Bearer ${session.access_token}`;
-    }
-
     let verificationResult: any = null;
 
-    // Tenta primeiro Edge Function
     try {
-      const edgeRes = await fetch(edgeFunctionUrl, {
+      verificationResult = await callGoogleDriveEdge('verify-file', {
         method: 'POST',
-        headers,
-        body: JSON.stringify({ fileId: targetFileId, backupId }),
+        body: { fileId: targetFileId, backupId },
       });
-
-      if (edgeRes.ok) {
-        verificationResult = await edgeRes.json();
-      }
-    } catch (e) {
-      console.warn('[backupService] Edge Function verify-file fallback:', e);
-    }
-
-    // Fallback para backend local se necessário
-    if (!verificationResult) {
-      try {
-        const localRes = await fetch('/api/google-drive/verify-file', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fileId: targetFileId, backupId }),
-        });
-        if (localRes.ok) {
-          verificationResult = await localRes.json();
-        } else {
-          const errData = await localRes.json().catch(() => ({}));
-          verificationResult = {
-            success: false,
-            exists: false,
-            message: errData.error || 'Erro ao verificar arquivo junto ao Google Drive.',
-            reconnectRequired: Boolean(errData.reconnectRequired),
-          };
-        }
-      } catch (err: any) {
-        verificationResult = {
-          success: false,
-          exists: false,
-          message: err.message || 'Falha de comunicação com o servidor de verificação.',
-        };
-      }
+    } catch (err: any) {
+      console.warn('[backupService] Falha ao verificar arquivo via Edge Function:', err);
+      verificationResult = {
+        success: false,
+        exists: false,
+        message: err.message || 'Falha de comunicação com o serviço do Google Drive.',
+      };
     }
 
     const now = new Date().toISOString();
@@ -1138,61 +1023,22 @@ export const backupService = {
 
     // 2. Se houver arquivo no Google Drive, executa exclusão remota
     if (backup.storage_provider === 'google_drive' && backup.file_id) {
-      const edgeFunctionUrl = `${supabaseUrl}/functions/v1/google-drive-oauth?action=delete-file`;
-
-      const { data: { session } } = await supabase.auth.getSession();
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (session?.access_token) {
-        headers['Authorization'] = `Bearer ${session.access_token}`;
-      }
-
       let deleteRemoteSuccess = false;
-      let deleteRemoteError = '';
       let reconnectRequired = false;
 
-      // Tenta Edge Function
       try {
-        const edgeRes = await fetch(edgeFunctionUrl, {
+        const edgeData = await callGoogleDriveEdge('delete-file', {
           method: 'POST',
-          headers,
-          body: JSON.stringify({ fileId: backup.file_id, backupId }),
+          body: { fileId: backup.file_id, backupId },
         });
 
-        if (edgeRes.ok) {
-          const edgeData = await edgeRes.json();
-          if (edgeData.deleted || edgeData.alreadyDeleted) {
-            deleteRemoteSuccess = true;
-          }
-        } else {
-          const errData = await edgeRes.json().catch(() => ({}));
-          deleteRemoteError = errData.error || 'Falha na exclusão remota.';
-          reconnectRequired = Boolean(errData.reconnectRequired);
+        if (edgeData.deleted || edgeData.alreadyDeleted) {
+          deleteRemoteSuccess = true;
         }
-      } catch (e) {
-        console.warn('[backupService] Edge Function delete-file fallback:', e);
-      }
-
-      // Fallback para servidor local
-      if (!deleteRemoteSuccess && !reconnectRequired) {
-        try {
-          const localRes = await fetch('/api/google-drive/delete-file', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ fileId: backup.file_id, backupId }),
-          });
-
-          if (localRes.ok) {
-            const localData = await localRes.json();
-            if (localData.deleted || localData.alreadyDeleted) {
-              deleteRemoteSuccess = true;
-            }
-          } else {
-            const errData = await localRes.json().catch(() => ({}));
-            deleteRemoteError = errData.error || 'Falha na exclusão remota.';
-            reconnectRequired = Boolean(errData.reconnectRequired);
-          }
-        } catch (err: any) {
-          deleteRemoteError = err.message || 'Erro de comunicação ao excluir arquivo remoto.';
+      } catch (e: any) {
+        console.warn('[backupService] Falha na exclusão remota via Edge Function:', e);
+        if (e.message?.includes('reconectar') || e.message?.includes('reconnect')) {
+          reconnectRequired = true;
         }
       }
 

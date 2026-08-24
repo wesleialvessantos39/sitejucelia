@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   Building2,
@@ -39,6 +39,11 @@ export default function AdminLayout() {
   const { settings, getEffectiveAsset } = useVisualIdentity();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Fecha o drawer automaticamente ao mudar de rota
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   const adminIconSrc = getEffectiveAsset
     ? getEffectiveAsset('admin_sidebar_icon')
@@ -335,7 +340,7 @@ export default function AdminLayout() {
         <div className="fixed inset-0 z-50 lg:hidden">
           {/* Backdrop com clique fora */}
           <div
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity z-40"
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity z-40 pointer-events-auto"
             onClick={() => setMobileMenuOpen(false)}
             aria-hidden="true"
           />
@@ -379,7 +384,7 @@ export default function AdminLayout() {
               </div>
 
               {/* Grouped Navigation Links */}
-              <nav className="space-y-5">
+              <nav className="space-y-5 relative z-[60] pointer-events-auto">
                 {navGroups.map((group) => (
                   <div key={group.groupName} className="space-y-1.5">
                     <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#C5A059] block px-2">
@@ -390,14 +395,11 @@ export default function AdminLayout() {
                         const Icon = item.icon;
                         const isActive = location.pathname === item.path;
                         return (
-                          <button
+                          <Link
                             key={item.path}
-                            type="button"
-                            onClick={() => {
-                              navigate(item.path);
-                              setMobileMenuOpen(false);
-                            }}
-                            className={`w-full min-h-[44px] flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer select-none text-left ${
+                            to={item.path}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className={`relative z-[60] w-full min-h-[48px] flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold touch-manipulation pointer-events-auto select-none transition-all ${
                               isActive
                                 ? 'bg-[#C5A059] text-black font-bold shadow-md'
                                 : 'text-slate-300 hover:text-white hover:bg-white/5 active:bg-white/10'
@@ -405,7 +407,7 @@ export default function AdminLayout() {
                           >
                             <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-black' : 'text-[#C5A059]'}`} />
                             <span className="truncate">{item.label}</span>
-                          </button>
+                          </Link>
                         );
                       })}
                     </div>
@@ -415,13 +417,13 @@ export default function AdminLayout() {
             </div>
 
             {/* Drawer Footer Actions */}
-            <div className="pt-5 border-t border-white/10 space-y-2 shrink-0">
+            <div className="pt-5 border-t border-white/10 space-y-2 shrink-0 relative z-[60] pointer-events-auto">
               <Link
                 to="/"
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setMobileMenuOpen(false)}
-                className="w-full min-h-[44px] flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#122038] border border-[#C5A059]/40 text-xs font-bold text-[#C5A059] hover:bg-[#C5A059] hover:text-black transition-all"
+                className="w-full min-h-[48px] flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#122038] border border-[#C5A059]/40 text-xs font-bold text-[#C5A059] hover:bg-[#C5A059] hover:text-black transition-all touch-manipulation pointer-events-auto"
               >
                 <Eye className="w-4 h-4" />
                 <span>Ver Site Público</span>
@@ -432,7 +434,7 @@ export default function AdminLayout() {
                   setMobileMenuOpen(false);
                   handleLogout();
                 }}
-                className="w-full min-h-[44px] flex items-center justify-center gap-2 py-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs font-bold text-rose-400 hover:bg-rose-500/20 transition-all cursor-pointer"
+                className="w-full min-h-[48px] flex items-center justify-center gap-2 py-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs font-bold text-rose-400 hover:bg-rose-500/20 transition-all cursor-pointer touch-manipulation pointer-events-auto"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Encerrar Sessão</span>

@@ -1,8 +1,9 @@
 // /src/services/backupEngine.ts
 import JSZip from 'jszip';
-import { supabase, isSupabaseConfigured, supabaseUrl, supabaseAnonKey } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import type { SystemBackup, SystemBackupMetadata } from '../types/backup';
 import { supabaseDatabase } from './supabaseDatabase';
+import { callGoogleDriveEdge } from './backupService';
 
 export type BackupProgressStep =
   | 'validating'
@@ -775,65 +776,21 @@ export const backupEngine = {
     error?: string;
   }> {
     try {
-      // 1. Consulta exclusivamente a Edge Function oficial (google-drive-oauth?action=status)
-      const edgeFunctionUrl = `${supabaseUrl}/functions/v1/google-drive-oauth?action=status`;
+      const data = await callGoogleDriveEdge('status');
 
-      const { data: { session } } = await supabase.auth.getSession();
-      const headers: Record<string, string> = {
-        'apikey': supabaseAnonKey,
-      };
-      if (session?.access_token) {
-        headers['Authorization'] = `Bearer ${session.access_token}`;
+      if (data.configured && data.connected) {
+        return {
+          connected: true,
+          folderId: data.connection?.drive_folder_id || undefined,
+          folderName: data.connection?.drive_folder_name || 'Jucélia Santana Engenharia Civil — Backups',
+          accountEmail: data.connection?.account_email || undefined,
+        };
+      } else {
+        return {
+          connected: false,
+          error: data.connection?.error_message || data.error || 'Nenhuma conexão ativa com o Google Drive encontrada.',
+        };
       }
-
-      try {
-        const edgeRes = await fetch(edgeFunctionUrl, {
-          method: 'GET',
-          headers,
-        });
-
-        if (edgeRes.ok) {
-          const data = await edgeRes.json();
-          if (data.configured && data.connected) {
-            return {
-              connected: true,
-              folderId: data.connection?.drive_folder_id || undefined,
-              folderName: data.connection?.drive_folder_name || 'Jucélia Santana Engenharia Civil — Backups',
-              accountEmail: data.connection?.account_email || undefined,
-            };
-          } else {
-            return {
-              connected: false,
-              error: data.connection?.error_message || data.error || 'Nenhuma conexão ativa com o Google Drive encontrada.',
-            };
-          }
-        }
-      } catch (edgeErr) {
-        console.warn('[backupEngine] Erro ao consultar Edge Function status:', edgeErr);
-      }
-
-      // 2. Fallback de verificação no backend local se a Edge Function estiver indisponível
-      try {
-        const localRes = await fetch('/api/google-drive/status');
-        if (localRes.ok) {
-          const localData = await localRes.json();
-          if (localData.configured && localData.connected) {
-            return {
-              connected: true,
-              folderId: localData.folder_id || undefined,
-              folderName: localData.folder_name || 'Jucélia Santana Engenharia Civil — Backups',
-              accountEmail: localData.account_email || undefined,
-            };
-          }
-        }
-      } catch (localErr) {
-        console.warn('[backupEngine] Erro no status local:', localErr);
-      }
-
-      return {
-        connected: false,
-        error: 'Nenhuma conexão ativa com o Google Drive encontrada no servidor. Conecte sua conta no painel.',
-      };
     } catch (err: any) {
       return {
         connected: false,
@@ -861,94 +818,36 @@ export const backupEngine = {
     const { fileName, fileData, folderId, backupId } = params;
     const base64Data = uint8ArrayToBase64(fileData);
 
-    // 1. Tenta envio prioritário via Supabase Edge Function (action=upload-backup)
     try {
-      const edgeFunctionUrl = `${supabaseUrl}/functions/v1/google-drive-oauth?action=upload-backup`;
-
-      const { data: { session } } = await supabase.auth.getSession();
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        'apikey': supabaseAnonKey,
-      };
-      if (session?.access_token) {
-        headers['Authorization'] = `Bearer ${session.access_token}`;
-      }
-
-      const edgeRes = await fetch(edgeFunctionUrl, {
+      const edgeData = await callGoogleDriveEdge('upload-backup', {
         method: 'POST',
-        headers,
-        body: JSON.stringify({
+        body: {
           fileName,
           fileData: base64Data,
           folderId,
           backupId,
-        }),
+        },
       });
 
-      if (edgeRes.ok) {
-        const edgeData = await edgeRes.json();
-        if (edgeData.success && edgeData.fileId) {
-          return {
-            success: true,
-            fileId: edgeData.fileId,
-            fileName: edgeData.fileName || fileName,
-            fileSize: edgeData.fileSize || fileData.byteLength,
-            webViewLink: edgeData.webViewLink || `https://drive.google.com/file/d/${edgeData.fileId}/view`,
-          };
-        } else {
-          return {
-            success: false,
-            error: edgeData.error || 'Falha ao processar o upload no Google Drive.',
-          };
-        }
+      if (edgeData.success && edgeData.fileId) {
+        return {
+          success: true,
+          fileId: edgeData.fileId,
+          fileName: edgeData.fileName || fileName,
+          fileSize: edgeData.fileSize || fileData.byteLength,
+          webViewLink: edgeData.webViewLink || `https://drive.google.com/file/d/${edgeData.fileId}/view`,
+        };
       } else {
-        const errJson = await edgeRes.json().catch(() => ({}));
-        const errMsg = errJson.error || `Erro retornado pelo Google Drive (HTTP ${edgeRes.status}).`;
-        console.warn('[backupEngine] Edge Function upload warning:', errMsg);
         return {
           success: false,
-          error: errMsg,
+          error: edgeData.error || 'Falha ao processar o upload no Google Drive.',
         };
       }
     } catch (edgeErr: any) {
-      console.warn('[backupEngine] Falha de rede na Edge Function de upload:', edgeErr);
-    }
-
-    // 2. Fallback: Upload via Proxy do Backend Local
-    try {
-      const proxyRes = await fetch('/api/google-drive/upload-backup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fileName,
-          fileData: base64Data,
-          folderId,
-          backupId,
-        }),
-      });
-
-      if (proxyRes.ok) {
-        const proxyData = await proxyRes.json();
-        if (proxyData.success && proxyData.fileId) {
-          return {
-            success: true,
-            fileId: proxyData.fileId,
-            fileName: proxyData.fileName || fileName,
-            fileSize: proxyData.fileSize || fileData.byteLength,
-            webViewLink: proxyData.webViewLink || `https://drive.google.com/file/d/${proxyData.fileId}/view`,
-          };
-        }
-      }
-
-      const errData = await proxyRes.json().catch(() => ({}));
+      console.error('[backupEngine] Falha no upload para o Google Drive via Edge Function:', edgeErr);
       return {
         success: false,
-        error: errData.error || 'Falha ao enviar backup para o Google Drive.',
-      };
-    } catch (proxyErr: any) {
-      return {
-        success: false,
-        error: proxyErr.message || 'Erro de comunicação ao enviar arquivo para o Google Drive.',
+        error: edgeErr.message || 'Falha ao enviar backup para o Google Drive.',
       };
     }
   },

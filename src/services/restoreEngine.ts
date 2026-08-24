@@ -4,6 +4,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import type { SystemBackup, RestoreProgressCallback, RestoreProgressStep, RestoreResult } from '../types/backup';
 import { backupEngine, calculateSha256 } from './backupEngine';
 import { supabaseDatabase } from './supabaseDatabase';
+import { callGoogleDriveEdge } from './backupService';
 
 // Trava de concorrência em memória para evitar restaurações simultâneas
 let isGlobalRestoreActive = false;
@@ -245,18 +246,11 @@ export const restoreEngine = {
         35
       );
 
-      const downloadRes = await fetch('/api/google-drive/download-backup', {
+      const downloadData = await callGoogleDriveEdge('download-backup', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fileId: targetBackup.file_id }),
+        body: { fileId: targetBackup.file_id },
       });
 
-      if (!downloadRes.ok) {
-        const errJson = await downloadRes.json().catch(() => ({}));
-        throw new Error(errJson.error || 'Falha ao baixar o arquivo de backup do Google Drive.');
-      }
-
-      const downloadData = await downloadRes.json();
       if (!downloadData.success || !downloadData.fileData) {
         throw new Error(downloadData.error || 'Dados corrompidos ou incompletos recebidos do Google Drive.');
       }
