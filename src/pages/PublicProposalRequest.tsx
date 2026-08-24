@@ -269,7 +269,7 @@ export default function PublicProposalRequest() {
               <div className="space-y-4">
                 <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
                   <User className="w-5 h-5 text-amber-500" />
-                  <h2 className="text-lg font-bold text-white">1. Dados do Solicitante & Contato</h2>
+                  <h2 className="text-lg font-bold text-white">1. Dados do Solicitante e Contato</h2>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -363,7 +363,7 @@ export default function PublicProposalRequest() {
               <div className="space-y-4">
                 <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
                   <Building2 className="w-5 h-5 text-amber-500" />
-                  <h2 className="text-lg font-bold text-white">2. Tipologia da Obra & Sistema Estrutural</h2>
+                  <h2 className="text-lg font-bold text-white">2. Tipologia da Obra e Sistema Estrutural</h2>
                 </div>
 
                 <div className="space-y-3">
@@ -527,7 +527,7 @@ export default function PublicProposalRequest() {
               <div className="space-y-4">
                 <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
                   <FileText className="w-5 h-5 text-amber-500" />
-                  <h2 className="text-lg font-bold text-white">4. Detalhamento & Anexo de Arquivos (PDF, PNG, JPG)</h2>
+                  <h2 className="text-lg font-bold text-white">4. Detalhamento e Anexo de Arquivos (PDF, PNG, JPG)</h2>
                 </div>
 
                 <div>

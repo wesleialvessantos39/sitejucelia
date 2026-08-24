@@ -78,7 +78,7 @@ export const PublicGallery: React.FC = () => {
         <div className="text-center max-w-3xl mx-auto mb-12">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#122038] border border-[#C5A059]/40 text-[#C5A059] text-xs font-jakarta font-semibold tracking-widest uppercase mb-4 shadow-sm">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Mídias & Registros de Campo</span>
+            <span>Mídias e Registros de Campo</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-cinzel font-bold text-white mb-4">
             Galeria Pública de <span className="text-gradient-gold">Fotos e Vídeos</span>

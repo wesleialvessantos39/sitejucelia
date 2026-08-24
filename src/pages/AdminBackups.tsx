@@ -296,6 +296,59 @@ export default function AdminBackups() {
     checkUrlAndLoad();
   }, [loadBackupData]);
 
+  // Sincronização em tempo real entre administradores (Focus, VisibilityChange e Polling silencioso de 5s)
+  useEffect(() => {
+    let isMounted = true;
+
+    const syncStatusSilently = async () => {
+      if (document.hidden) return;
+      try {
+        const freshStatus = await backupService.getGoogleDriveServerStatus();
+        if (isMounted) {
+          setServerStatus((prev) => {
+            if (
+              !prev ||
+              prev.connected !== freshStatus.connected ||
+              prev.status !== freshStatus.status ||
+              prev.account_email !== freshStatus.account_email ||
+              prev.folder_id !== freshStatus.folder_id ||
+              prev.folder_name !== freshStatus.folder_name
+            ) {
+              return freshStatus;
+            }
+            return prev;
+          });
+        }
+      } catch (err) {
+        // Ignora silenciosamente
+      }
+    };
+
+    const handleFocus = () => {
+      syncStatusSilently();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        syncStatusSilently();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    const syncInterval = window.setInterval(() => {
+      syncStatusSilently();
+    }, 5000);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.clearInterval(syncInterval);
+    };
+  }, []);
+
   // Iniciar Conexão OAuth com Google Drive (Janela Externa Top-Level + Polling Server-Side)
   const handleConnectGoogleDrive = async () => {
     if (connecting) return;
@@ -1895,7 +1948,7 @@ export default function AdminBackups() {
                   <th className="py-3 px-4">Nome do Backup / Arquivo</th>
                   <th className="py-3 px-4">Tipo</th>
                   <th className="py-3 px-4">Tamanho</th>
-                  <th className="py-3 px-4">Status & Integridade</th>
+                  <th className="py-3 px-4">Status e Integridade</th>
                   <th className="py-3 px-4">Responsável</th>
                   <th className="py-3 px-4">Data / Horário</th>
                   <th className="py-3 px-4 text-right">Ações</th>

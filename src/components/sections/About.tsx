@@ -71,7 +71,7 @@ export const About: React.FC = () => {
     },
     {
       icon: Compass,
-      title: 'Modelagem 3D & Compatibilização',
+      title: 'Modelagem 3D e Compatibilização',
       description: 'Análise tridimensional refinada para eliminar interferências antes da execução física na canteiro de obras.'
     },
     {
@@ -86,7 +86,7 @@ export const About: React.FC = () => {
     },
     {
       icon: FileCheck2,
-      title: 'Laudos Periciais & Vistorias',
+      title: 'Laudos Periciais e Vistorias',
       description: 'Diagnósticos cautelares, perícias prediais e laudos fotográficos com rigor técnico e suporte legal.'
     },
     {
@@ -124,7 +124,7 @@ export const About: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         <SectionHeader
-          badgeText={aboutContent.badgeText || "Institucional & Perfil Técnico"}
+          badgeText={aboutContent.badgeText || "Institucional e Perfil Técnico"}
           title={aboutContent.title || "ENGª JUCÉLIA SANTANA"}
           highlightTitle={aboutContent.highlightTitle || "SOLIDEZ, PRECISÃO E CREDIBILIDADE"}
           subtitle={aboutContent.subtitle || "Engenheira Civil registrada no CREA-RO, especializada em cálculo de estruturas, perícias e soluções de engenharia para edificações e agronegócio."}
@@ -173,7 +173,7 @@ export const About: React.FC = () => {
               </div>
               <div className="flex items-center gap-3 border-t border-white/5 pt-2.5">
                 <Briefcase className="w-4 h-4 text-[#C5A059] shrink-0" />
-                <span><strong>Atuação:</strong> Estruturas, Perícias, Consultoria & Laudos</span>
+                <span><strong>Atuação:</strong> Estruturas, Perícias, Consultoria e Laudos</span>
               </div>
             </div>
           </motion.div>
@@ -332,7 +332,7 @@ export const About: React.FC = () => {
         >
           <div className="text-center mb-8">
             <span className="font-jakarta text-xs uppercase tracking-widest text-[#C5A059] font-bold block mb-1">
-              Métricas & Reconhecimento
+              Métricas e Reconhecimento
             </span>
             <h3 className="font-cinzel font-bold text-white text-2xl sm:text-3xl">
               Nossa Trajetória em Números

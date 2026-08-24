@@ -597,7 +597,7 @@ export default function AdminInviteCodes() {
                   className="px-5 py-2 rounded-xl bg-[#C5A059] hover:bg-[#d4b068] text-black text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer shadow-lg disabled:opacity-50"
                 >
                   {isSubmittingCreate && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
-                  <span>Confirmar & Gerar</span>
+                  <span>Confirmar e Gerar</span>
                 </button>
               </div>
             </form>

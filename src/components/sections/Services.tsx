@@ -46,7 +46,7 @@ export const Services: React.FC = () => {
   const getCategoryLabel = (category: string) => {
     switch (category) {
       case 'estrutural': return 'Engenharia Estrutural';
-      case 'laudos': return 'Laudos & Perícias';
+      case 'laudos': return 'Laudos e Perícias';
       case 'agronegocio': return 'Infraestrutura Agro';
       case 'gestao': return 'Gestão de Obras';
       case 'consultoria': return 'Consultoria de Projetos';
@@ -226,7 +226,7 @@ export const Services: React.FC = () => {
             <div className="flex items-center justify-center lg:justify-start gap-2 text-[#C5A059]">
               <ShieldCheck className="w-5 h-5" />
               <span className="font-cinzel text-xs font-bold uppercase tracking-widest">
-                Responsabilidade Técnica & ART Inclusa
+                Responsabilidade Técnica e ART Inclusa
               </span>
             </div>
             <h3 className="font-cinzel font-bold text-white text-xl sm:text-2xl">

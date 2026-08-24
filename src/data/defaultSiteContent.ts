@@ -13,7 +13,7 @@ export const DEFAULT_SITE_CONTENT: SiteContentSettings = {
     whatsappNotice: 'Atendimento técnico rápido:',
   },
   about: {
-    badgeText: 'Institucional & Perfil Técnico',
+    badgeText: 'Institucional e Perfil Técnico',
     title: 'ENGª JUCÉLIA SANTANA',
     highlightTitle: 'SOLIDEZ, PRECISÃO E CREDIBILIDADE',
     subtitle: 'Engenheira Civil registrada no CREA-RO, especializada em cálculo de estruturas, perícias e soluções de engenharia para edificações e agronegócio.',

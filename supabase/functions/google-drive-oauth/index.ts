@@ -23,10 +23,11 @@ const SCOPES = [
 ].join(" ");
 
 const DEFAULT_ALLOWED_ORIGINS = [
-  "https://ais-dev-s4wgjxdixhtprwyc5mmidv-683133186701.us-east1.run.app",
-  "https://ais-pre-s4wgjxdixhtprwyc5mmidv-683133186701.us-east1.run.app",
   "https://juceliasantanaengencivil.com.br",
   "https://www.juceliasantanaengencivil.com.br",
+  "https://juc-lia-santana-engenharia-civil-wesleialvessantos-projects.vercel.app",
+  "https://ais-dev-s4wgjxdixhtprwyc5mmidv-683133186701.us-east1.run.app",
+  "https://ais-pre-s4wgjxdixhtprwyc5mmidv-683133186701.us-east1.run.app",
   "http://juceliasantanaengencivil.com.br",
   "http://www.juceliasantanaengencivil.com.br",
   "https://juceliasantana.com.br",
@@ -62,7 +63,7 @@ function getSafeAllowedOrigin(req: Request): string | null {
 }
 
 function buildCorsHeaders(origin: string | null) {
-  const safeOrigin = origin || DEFAULT_ALLOWED_ORIGINS[0];
+  const safeOrigin = origin || "https://juceliasantanaengencivil.com.br";
   return {
     "Access-Control-Allow-Origin": safeOrigin,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -172,9 +173,21 @@ serve(async (req: Request) => {
   const allowedOrigin = getSafeAllowedOrigin(req);
   const corsHeaders = buildCorsHeaders(allowedOrigin);
 
-  // 1. Resposta CORS Preflight
+  // 1. Resposta CORS Preflight Rigorosa
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    const requestOrigin = req.headers.get("origin");
+    if (requestOrigin && !allowedOrigin) {
+      return new Response(null, {
+        status: 403,
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      });
+    }
+    return new Response(null, {
+      status: 204,
+      headers: buildCorsHeaders(allowedOrigin),
+    });
   }
 
   const url = new URL(req.url);

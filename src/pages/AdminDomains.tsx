@@ -522,11 +522,11 @@ export default function AdminDomains() {
           </div>
         </div>
 
-        {/* Status & Protocolo */}
+        {/* Status e Protocolo */}
         <div className="bg-[#0B1526] border border-white/10 rounded-2xl p-4 sm:p-5 flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Segurança & SSL
+              Segurança e SSL
             </span>
             <div className="text-sm font-bold text-sky-400 mt-1.5 flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4" />
@@ -885,7 +885,7 @@ export default function AdminDomains() {
             <span>Guia Técnico: Sincronização de Domínios, Supabase e Roteamento SPA</span>
           </div>
           <span className="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full">
-            Produção & Hospedagem
+            Produção e Hospedagem
           </span>
         </div>
 

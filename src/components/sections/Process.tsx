@@ -31,23 +31,23 @@ export const Process: React.FC = () => {
     {
       number: '01',
       icon: ClipboardList,
-      title: 'Consulta & Diagnóstico',
-      subtitle: 'Alinhamento Inicial & Análise Técnica',
+      title: 'Consulta e Diagnóstico',
+      subtitle: 'Alinhamento Inicial e Análise Técnica',
       description: 'Levantamento de necessidades, análise preliminar do projeto arquitetônico e estudo do terreno para definição segura do escopo técnico.',
       deliverables: ['Estudo de viabilidade', 'Escopo técnico detalhado', 'Definição de diretrizes']
     },
     {
       number: '02',
       icon: Compass,
-      title: 'Elaboração & Cálculo',
-      subtitle: 'Modelagem 3D & Engenharia Estrutural',
+      title: 'Elaboração e Cálculo',
+      subtitle: 'Modelagem 3D e Engenharia Estrutural',
       description: 'Cálculo computacional avançado das estruturas, compatibilização tridimensional e dimensionamento racional conforme normas ABNT (NBR 6118 / 6120).',
       deliverables: ['Modelagem tridimensional', 'Detalhamento de armaduras', 'Racionalização de aço e concreto']
     },
     {
       number: '03',
       icon: ShieldCheck,
-      title: 'Emissão de ART & Validação',
+      title: 'Emissão de ART e Validação',
       subtitle: 'Conformidade Legal no CREA-RO',
       description: 'Registro formal da Anotação de Responsabilidade Técnica (ART) e emissão de memoriais descritivos que asseguram conformidade jurídica e técnica.',
       deliverables: ['ART registrada no CREA-RO', 'Memoriais de cálculo', 'Documentação oficial']
@@ -55,8 +55,8 @@ export const Process: React.FC = () => {
     {
       number: '04',
       icon: HardHat,
-      title: 'Acompanhamento & Entrega',
-      subtitle: 'Suporte na Obra & Acervo Final',
+      title: 'Acompanhamento e Entrega',
+      subtitle: 'Suporte na Obra e Acervo Final',
       description: 'Acompanhamento consultivo da execução no canteiro de obras, esclarecimento de dúvidas técnicas e entrega do acervo definitivo ao cliente.',
       deliverables: ['Vistorias técnicas', 'Orientação à equipe de obra', 'Entrega do projeto final']
     }

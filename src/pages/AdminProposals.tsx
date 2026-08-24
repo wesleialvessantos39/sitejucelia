@@ -348,8 +348,8 @@ export default function AdminProposals() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-800 bg-slate-950/60 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  <th className="py-3.5 px-4">Solicitante & Local</th>
-                  <th className="py-3.5 px-4">Tipo & Estrutura</th>
+                  <th className="py-3.5 px-4">Solicitante e Local</th>
+                  <th className="py-3.5 px-4">Tipo e Estrutura</th>
                   <th className="py-3.5 px-4">Serviço Desejado</th>
                   <th className="py-3.5 px-4">Área / Pav.</th>
                   <th className="py-3.5 px-4">Status</th>

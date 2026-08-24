@@ -127,7 +127,7 @@ export function formatAuditAction(action: string, details: any, entityType?: str
       return {
         title: safeAction === 'DELETE_ADMIN' ? 'Exclusão Definitiva de Administrador' : 'Exclusão Definitiva de Usuário',
         category: 'users',
-        categoryLabel: 'Segurança & Contas',
+        categoryLabel: 'Segurança e Contas',
         badgeColor: 'bg-rose-600/20 text-rose-300 border border-rose-500/40',
         description: `O cadastro de ${safeDetails.target_name || safeDetails.target_email || 'usuário'} foi permanentemente excluído do banco de dados.`,
         detailsList: [
@@ -142,7 +142,7 @@ export function formatAuditAction(action: string, details: any, entityType?: str
       return {
         title: 'Cadastro de Novo Usuário',
         category: 'users',
-        categoryLabel: 'Contas & Acessos',
+        categoryLabel: 'Contas e Acessos',
         badgeColor: 'bg-sky-500/15 text-sky-400 border border-sky-500/30',
         description: `Novo cadastro realizado por ${safeDetails.full_name || safeDetails.email || 'usuário'}.`,
         detailsList: [
@@ -239,7 +239,7 @@ export function formatAuditAction(action: string, details: any, entityType?: str
       return {
         title: 'Restauração de Enquadramento Padrão',
         category: 'theme',
-        categoryLabel: 'Enquadramento & Mídia',
+        categoryLabel: 'Enquadramento e Mídia',
         badgeColor: 'bg-amber-500/15 text-amber-400 border border-amber-500/30',
         description: `O enquadramento da mídia ${safeDetails.media_key || ''} foi restaurado para a proporção e foco originais.`,
         detailsList: [
@@ -253,7 +253,7 @@ export function formatAuditAction(action: string, details: any, entityType?: str
     return {
       title: 'Ajuste de Enquadramento e Foco Visual',
       category: 'theme',
-      categoryLabel: 'Enquadramento & Mídia',
+      categoryLabel: 'Enquadramento e Mídia',
       badgeColor: 'bg-amber-500/15 text-amber-300 border border-amber-500/30',
       description: `Ajuste milimétrico de foco (X: ${safeDetails.focal_x ?? safeDetails.position_x ?? 50}%, Y: ${safeDetails.focal_y ?? safeDetails.position_y ?? 50}%), zoom (${safeDetails.zoom ?? 1.0}x) e modo (${safeDetails.object_fit || 'cover'}).`,
       detailsList: [
@@ -289,7 +289,7 @@ export function formatAuditAction(action: string, details: any, entityType?: str
     return {
       title: 'Atualização da Identidade Visual e Cores',
       category: 'theme',
-      categoryLabel: 'Aparência & Identidade',
+      categoryLabel: 'Aparência e Identidade',
       badgeColor: 'bg-purple-500/15 text-purple-300 border border-purple-500/30',
       description: 'Personalização do layout institucional, paleta de cores ou tipografia do portal.',
       detailsList: detailsList.length > 0 ? detailsList.slice(0, 4) : [{ label: 'Modificações', value: 'Configurações de Tema salvas' }],
@@ -456,7 +456,7 @@ export function formatAuditAction(action: string, details: any, entityType?: str
       return {
         title: 'Limpeza Geral do Histórico de Auditoria',
         category: 'system',
-        categoryLabel: 'Segurança & Logs',
+        categoryLabel: 'Segurança e Logs',
         badgeColor: 'bg-rose-500/20 text-rose-300 border border-rose-500/40',
         description: 'Todo o histórico de registros e logs de auditoria administrativa foi excluído permanentemente do banco de dados.',
         detailsList: [
@@ -470,7 +470,7 @@ export function formatAuditAction(action: string, details: any, entityType?: str
     return {
       title: 'Exclusão de Registros de Auditoria',
       category: 'system',
-      categoryLabel: 'Segurança & Logs',
+      categoryLabel: 'Segurança e Logs',
       badgeColor: 'bg-amber-500/15 text-amber-300 border border-amber-500/30',
       description: 'Registros específicos de auditoria foram removidos permanentemente do banco de dados.',
       detailsList: [
@@ -499,7 +499,7 @@ export function formatAuditAction(action: string, details: any, entityType?: str
   return {
     title: readableTitle || 'Operação Administrativa Registrada',
     category: 'system',
-    categoryLabel: 'Sistema & Auditoria',
+    categoryLabel: 'Sistema e Auditoria',
     badgeColor: 'bg-slate-500/15 text-slate-300 border border-slate-500/30',
     description: `Ação registrada para a entidade ${entityType || 'Geral'}.`,
     detailsList: genericDetails.length > 0 ? genericDetails : [{ label: 'Status', value: 'Executado com sucesso' }],

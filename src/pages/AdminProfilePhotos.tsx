@@ -45,7 +45,7 @@ export default function AdminProfilePhotos() {
   // Estado para Modal de Criar Nova Foto
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newTitle, setNewTitle] = useState('');
-  const [newCategory, setNewCategory] = useState('Perfil Profissional & Engenharia');
+  const [newCategory, setNewCategory] = useState('Perfil Profissional e Engenharia');
   const [newPose, setNewPose] = useState('Atuação Executiva e Consultoria');
   const [newOutfit, setNewOutfit] = useState('Engenheira Civil');
   const [newCaption, setNewCaption] = useState('');
@@ -224,7 +224,7 @@ export default function AdminProfilePhotos() {
 
       // Reset campos
       setNewTitle('');
-      setNewCategory('Perfil Profissional & Engenharia');
+      setNewCategory('Perfil Profissional e Engenharia');
       setNewPose('Atuação Executiva e Consultoria');
       setNewOutfit('Engenheira Civil');
       setNewCaption('');

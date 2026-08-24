@@ -762,7 +762,7 @@ export default function AdminUsers() {
                 }`}
               >
                 <Palette className="w-3.5 h-3.5" />
-                Tema & Aparência
+                Tema e Aparência
               </button>
               <button
                 onClick={() => setAuditCategoryFilter('documents')}

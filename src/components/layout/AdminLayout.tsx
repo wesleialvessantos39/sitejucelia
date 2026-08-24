@@ -80,7 +80,7 @@ export default function AdminLayout() {
       groupName: 'Gestão e Acesso',
       items: [
         { label: 'Domínios do Site', path: '/admin/domains', icon: Globe },
-        { label: 'Backups & Drive', path: '/admin/backups', icon: Database },
+        { label: 'Backups e Drive', path: '/admin/backups', icon: Database },
         { label: 'Mensagens Contato', path: '/admin/messages', icon: MessageSquare },
         { label: 'Usuários', path: '/admin/users', icon: Users },
         { label: 'Convites', path: '/admin/invite-codes', icon: Ticket },
@@ -333,14 +333,18 @@ export default function AdminLayout() {
       {/* ========================================================================= */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          {/* Backdrop */}
+          {/* Backdrop com clique fora */}
           <div
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity z-40"
             onClick={() => setMobileMenuOpen(false)}
+            aria-hidden="true"
           />
 
-          {/* Drawer Menu */}
-          <div className="fixed inset-y-0 left-0 max-w-xs w-full bg-[#0B1526] border-r border-white/10 p-5 flex flex-col justify-between shadow-2xl overflow-y-auto">
+          {/* Drawer Menu com z-50 acima do backdrop */}
+          <aside
+            aria-label="Menu Lateral Administrativo Mobile"
+            className="fixed inset-y-0 left-0 max-w-xs w-full bg-[#0B1526] border-r border-white/10 p-5 flex flex-col justify-between shadow-2xl overflow-y-auto z-50 pointer-events-auto"
+          >
             <div className="space-y-5">
               {/* Drawer Header */}
               <div className="flex items-center justify-between pb-4 border-b border-white/10">
@@ -367,14 +371,15 @@ export default function AdminLayout() {
                 <button
                   type="button"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white cursor-pointer"
+                  className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center"
+                  aria-label="Fechar menu"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               {/* Grouped Navigation Links */}
-              <div className="space-y-5">
+              <nav className="space-y-5">
                 {navGroups.map((group) => (
                   <div key={group.groupName} className="space-y-1.5">
                     <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#C5A059] block px-2">
@@ -385,25 +390,28 @@ export default function AdminLayout() {
                         const Icon = item.icon;
                         const isActive = location.pathname === item.path;
                         return (
-                          <Link
+                          <button
                             key={item.path}
-                            to={item.path}
-                            onClick={() => setMobileMenuOpen(false)}
-                            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                            type="button"
+                            onClick={() => {
+                              navigate(item.path);
+                              setMobileMenuOpen(false);
+                            }}
+                            className={`w-full min-h-[44px] flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer select-none text-left ${
                               isActive
                                 ? 'bg-[#C5A059] text-black font-bold shadow-md'
-                                : 'text-slate-300 hover:text-white hover:bg-white/5'
+                                : 'text-slate-300 hover:text-white hover:bg-white/5 active:bg-white/10'
                             }`}
                           >
                             <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-black' : 'text-[#C5A059]'}`} />
-                            <span>{item.label}</span>
-                          </Link>
+                            <span className="truncate">{item.label}</span>
+                          </button>
                         );
                       })}
                     </div>
                   </div>
                 ))}
-              </div>
+              </nav>
             </div>
 
             {/* Drawer Footer Actions */}
@@ -412,21 +420,25 @@ export default function AdminLayout() {
                 to="/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#122038] border border-[#C5A059]/40 text-xs font-bold text-[#C5A059] hover:bg-[#C5A059] hover:text-black transition-all"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full min-h-[44px] flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#122038] border border-[#C5A059]/40 text-xs font-bold text-[#C5A059] hover:bg-[#C5A059] hover:text-black transition-all"
               >
                 <Eye className="w-4 h-4" />
                 <span>Ver Site Público</span>
               </Link>
               <button
                 type="button"
-                onClick={handleLogout}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs font-bold text-rose-400 hover:bg-rose-500/20 transition-all cursor-pointer"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  handleLogout();
+                }}
+                className="w-full min-h-[44px] flex items-center justify-center gap-2 py-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs font-bold text-rose-400 hover:bg-rose-500/20 transition-all cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Encerrar Sessão</span>
               </button>
             </div>
-          </div>
+          </aside>
         </div>
       )}
     </div>

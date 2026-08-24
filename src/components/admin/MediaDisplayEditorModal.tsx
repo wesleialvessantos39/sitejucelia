@@ -35,7 +35,7 @@ interface MediaDisplayEditorModalProps {
 }
 
 const OBJECT_FIT_OPTIONS: { value: MediaObjectFit; label: string; desc: string }[] = [
-  { value: 'cover', label: 'Cover (Preencher & Recortar)', desc: 'Cobre toda a área preservando proporção' },
+  { value: 'cover', label: 'Cover (Preencher e Recortar)', desc: 'Cobre toda a área preservando proporção' },
   { value: 'contain', label: 'Contain (Conter sem Cortar)', desc: 'Exibe a imagem inteira sem cortes' },
   { value: 'fill', label: 'Fill (Esticar)', desc: 'Preenche ignorando a proporção' },
   { value: 'scale-down', label: 'Scale Down', desc: 'Reduz se for maior que o container' },

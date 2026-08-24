@@ -489,12 +489,12 @@ export const DocsPortalModal: React.FC<DocsPortalModalProps> = ({ isOpen, onClos
                   </div>
 
                   <p className="text-xs text-slate-300 leading-relaxed">
-                    <span className="font-bold text-white">Layout & Estrutura: </span>
+                    <span className="font-bold text-white">Layout e Estrutura: </span>
                     {sec.layoutDescription}
                   </p>
 
                   <div className="space-y-1">
-                    <span className="font-bold text-xs text-[#C5A059]">Elementos Visuais & Componentes:</span>
+                    <span className="font-bold text-xs text-[#C5A059]">Elementos Visuais e Componentes:</span>
                     <ul className="list-disc list-inside space-y-1 text-[11px] text-slate-400 pl-1">
                       {sec.visualElements.map((elem, eIdx) => (
                         <li key={eIdx}>{elem}</li>
@@ -504,7 +504,7 @@ export const DocsPortalModal: React.FC<DocsPortalModalProps> = ({ isOpen, onClos
 
                   {sec.copywritingTexts.length > 0 && (
                     <div className="space-y-1 bg-[#0B0C0E] p-3 rounded-lg border border-white/5">
-                      <span className="font-bold text-[11px] text-[#C5A059]">Copywriting & Textos Institucionais:</span>
+                      <span className="font-bold text-[11px] text-[#C5A059]">Copywriting e Textos Institucionais:</span>
                       {sec.copywritingTexts.map((copy, cIdx) => (
                         <p key={cIdx} className="text-[11px] text-slate-300">
                           <span className="text-slate-400 font-semibold">{copy.label}: </span>
@@ -526,7 +526,7 @@ export const DocsPortalModal: React.FC<DocsPortalModalProps> = ({ isOpen, onClos
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="p-4 bg-[#121316] border border-white/5 rounded-xl space-y-2">
                 <h5 className="font-cinzel font-bold text-white text-xs uppercase tracking-wider text-[#C5A059] flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5" /> Microinterações & Feedback Visual
+                  <Sparkles className="w-3.5 h-3.5" /> Microinterações e Feedback Visual
                 </h5>
                 <ul className="space-y-2 text-[11px] text-slate-400">
                   <li><strong className="text-slate-200">Hover:</strong> {MICROINTERACTIONS_SPEC.hoverEffects}</li>
