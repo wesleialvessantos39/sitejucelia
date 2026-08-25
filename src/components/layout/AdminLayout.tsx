@@ -337,18 +337,30 @@ export default function AdminLayout() {
       {/* 3. MENU DRAWER LATERAL MOBILE / TABLET                                   */}
       {/* ========================================================================= */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          {/* Backdrop com clique fora */}
-          <div
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity z-40 pointer-events-auto"
+        <div className="fixed inset-0 z-[100] lg:hidden isolate">
+          {/* Backdrop absoluto com fechamento ao toque */}
+          <button
+            type="button"
+            aria-label="Fechar menu"
             onClick={() => setMobileMenuOpen(false)}
-            aria-hidden="true"
+            className="absolute inset-0 z-0 bg-black/80 backdrop-blur-sm"
           />
 
-          {/* Drawer Menu com z-50 acima do backdrop */}
+          {/* Drawer Menu com z-10 acima do backdrop */}
           <aside
-            aria-label="Menu Lateral Administrativo Mobile"
-            className="fixed inset-y-0 left-0 max-w-xs w-full bg-[#0B1526] border-r border-white/10 p-5 flex flex-col justify-between shadow-2xl overflow-y-auto z-50 pointer-events-auto"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navegação administrativa"
+            className="
+              absolute inset-y-0 left-0 z-10
+              w-[min(20rem,88vw)]
+              bg-[#0B1526]
+              border-r border-white/10
+              overflow-y-auto
+              overscroll-contain
+              pointer-events-auto
+              p-5 flex flex-col justify-between shadow-2xl
+            "
           >
             <div className="space-y-5">
               {/* Drawer Header */}
@@ -383,8 +395,8 @@ export default function AdminLayout() {
                 </button>
               </div>
 
-              {/* Grouped Navigation Links */}
-              <nav className="space-y-5 relative z-[60] pointer-events-auto">
+              {/* Grouped Navigation Links (Links Nativos HTML) */}
+              <nav className="space-y-5 relative z-20 pointer-events-auto">
                 {navGroups.map((group) => (
                   <div key={group.groupName} className="space-y-1.5">
                     <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#C5A059] block px-2">
@@ -395,19 +407,24 @@ export default function AdminLayout() {
                         const Icon = item.icon;
                         const isActive = location.pathname === item.path;
                         return (
-                          <Link
+                          <a
                             key={item.path}
-                            to={item.path}
-                            onClick={() => setMobileMenuOpen(false)}
-                            className={`relative z-[60] w-full min-h-[48px] flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold touch-manipulation pointer-events-auto select-none transition-all ${
+                            href={item.path}
+                            aria-current={isActive ? 'page' : undefined}
+                            className={`relative z-20 w-full min-h-[48px] flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold pointer-events-auto touch-manipulation transition-all ${
                               isActive
                                 ? 'bg-[#C5A059] text-black font-bold shadow-md'
-                                : 'text-slate-300 hover:text-white hover:bg-white/5 active:bg-white/10'
+                                : 'text-slate-300 hover:text-white hover:bg-white/5'
                             }`}
                           >
-                            <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-black' : 'text-[#C5A059]'}`} />
-                            <span className="truncate">{item.label}</span>
-                          </Link>
+                            <Icon
+                              aria-hidden="true"
+                              className={`w-4 h-4 shrink-0 ${
+                                isActive ? 'text-black' : 'text-[#C5A059]'
+                              }`}
+                            />
+                            <span>{item.label}</span>
+                          </a>
                         );
                       })}
                     </div>
@@ -417,17 +434,16 @@ export default function AdminLayout() {
             </div>
 
             {/* Drawer Footer Actions */}
-            <div className="pt-5 border-t border-white/10 space-y-2 shrink-0 relative z-[60] pointer-events-auto">
-              <Link
-                to="/"
+            <div className="pt-5 border-t border-white/10 space-y-2 shrink-0 relative z-20 pointer-events-auto">
+              <a
+                href="/"
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={() => setMobileMenuOpen(false)}
                 className="w-full min-h-[48px] flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#122038] border border-[#C5A059]/40 text-xs font-bold text-[#C5A059] hover:bg-[#C5A059] hover:text-black transition-all touch-manipulation pointer-events-auto"
               >
                 <Eye className="w-4 h-4" />
                 <span>Ver Site Público</span>
-              </Link>
+              </a>
               <button
                 type="button"
                 onClick={() => {
