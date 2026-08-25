@@ -1,7 +1,8 @@
 // /src/components/layout/Navbar.tsx
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import {
   Menu,
   X,
@@ -47,13 +48,14 @@ export interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ onOpenAdmin }) => {
   const { settings, getEffectiveAsset } = useVisualIdentity();
-  const { getWhatsAppHref, formattedWhatsApp } = useContactSettings();
+  const { getWhatsAppHref } = useContactSettings();
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
   const siteLogoSrc = getEffectiveAsset ? getEffectiveAsset('site_logo') : (settings.site_logo || getAssetUrl('foto_logo.png'));
-
 
   // Monitor scroll state & active section based on actual DOM positions
   useEffect(() => {
@@ -88,281 +90,315 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAdmin }) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close drawer on Escape key
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && mobileMenuOpen) {
-        setMobileMenuOpen(false);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [mobileMenuOpen]);
-
-  // Click outside detector to close drawer automatically
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
-      if (mobileMenuOpen && headerRef.current && !headerRef.current.contains(e.target as Node)) {
-        setMobileMenuOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('touchstart', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('touchstart', handleClickOutside);
-    };
-  }, [mobileMenuOpen]);
-
-  // Lock body scroll when mobile drawer is open
+  // Controle de scroll do body, tecla Escape e foco acessível do drawer mobile público
   useEffect(() => {
     if (mobileMenuOpen) {
+      const originalOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
+
+      const focusTimer = setTimeout(() => {
+        drawerRef.current?.focus();
+      }, 50);
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          setMobileMenuOpen(false);
+        }
+      };
+
+      window.addEventListener('keydown', handleKeyDown);
+
+      return () => {
+        clearTimeout(focusTimer);
+        document.body.style.overflow = originalOverflow;
+        window.removeEventListener('keydown', handleKeyDown);
+        menuButtonRef.current?.focus();
+      };
     }
-    return () => {
-      document.body.style.overflow = '';
-    };
   }, [mobileMenuOpen]);
 
-  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string, id: string) => {
-    e.preventDefault();
+  // Função pura e segura de rolagem suave até a seção pública
+  const scrollToPublicSection = (sectionId: string) => {
+    if (sectionId === 'home') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    const element = document.getElementById(sectionId);
+
+    if (!element) {
+      console.warn(`[Navbar] Seção pública não encontrada: ${sectionId}`);
+      return;
+    }
+
+    const headerHeight =
+      headerRef.current?.getBoundingClientRect().height ?? 85;
+
+    const targetPosition =
+      element.getBoundingClientRect().top +
+      window.scrollY -
+      headerHeight -
+      8;
+
+    window.scrollTo({
+      top: Math.max(0, targetPosition),
+      behavior: 'smooth',
+    });
+  };
+
+  // Manipulador específico e robusto para cliques na navegação mobile
+  const handleMobileNavClick = (sectionId: string) => {
+    setActiveSection(sectionId);
     setMobileMenuOpen(false);
-    setActiveSection(id);
     document.body.style.overflow = '';
 
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        scrollToPublicSection(sectionId);
+      });
+    });
+  };
+
+  // Manipulador para cliques na navegação desktop
+  const handleDesktopNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string, id: string) => {
+    e.preventDefault();
+    setActiveSection(id);
     const targetId = href.replace('#', '');
-
-    setTimeout(() => {
-      if (targetId === 'home' || href === '#home') {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        return;
-      }
-
-      const element = document.getElementById(targetId);
-      if (element) {
-        const headerOffset = 85;
-        const bodyRect = document.body.getBoundingClientRect().top;
-        const elementRect = element.getBoundingClientRect().top;
-        const elementPosition = elementRect - bodyRect;
-        const offsetPosition = elementPosition - headerOffset;
-
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: 'smooth',
-        });
-      }
-    }, 50);
+    scrollToPublicSection(targetId);
   };
 
   const whatsAppMessage = 'Olá, Engª Jucélia Santana! Gostaria de solicitar informações sobre um orçamento ou consultoria técnica para obra/projeto em Ariquemes - RO.';
   const whatsAppUrl = getWhatsAppHref(whatsAppMessage);
 
   return (
-    <header
-      ref={headerRef}
-      role="banner"
-      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 pointer-events-none pt-2 sm:pt-3 pb-2"
-    >
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pointer-events-auto">
-        <div
-          className={`rounded-2xl border transition-all duration-300 px-3 sm:px-5 lg:px-5 py-2 sm:py-2.5 flex items-center justify-between gap-1.5 sm:gap-2 overflow-hidden ${
-            isScrolled
-              ? 'bg-[#0A1220]/95 backdrop-blur-md border-[#C5A059]/40 shadow-2xl shadow-black/80'
-              : 'bg-[#122038]/90 backdrop-blur-md border-white/10 shadow-xl'
-          }`}
-        >
-          
-          {/* Logo Brand */}
-          <a
-            href="#home"
-            onClick={(e) => handleNavClick(e, '#home', 'home')}
-            className="flex items-center gap-2.5 sm:gap-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C5A059] rounded-lg p-1 transition-all shrink-0"
-            aria-label={`${COMPANY_INFO.name} - Ir para o início`}
+    <>
+      <header
+        ref={headerRef}
+        role="banner"
+        className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 pointer-events-none pt-2 sm:pt-3 pb-2"
+      >
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pointer-events-auto">
+          <div
+            className={`rounded-2xl border transition-all duration-300 px-3 sm:px-5 lg:px-5 py-2 sm:py-2.5 flex items-center justify-between gap-1.5 sm:gap-2 overflow-hidden ${
+              isScrolled
+                ? 'bg-[#0A1220]/95 backdrop-blur-md border-[#C5A059]/40 shadow-2xl shadow-black/80'
+                : 'bg-[#122038]/90 backdrop-blur-md border-white/10 shadow-xl'
+            }`}
           >
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-[#D4AF37] via-[#C5A059] to-[#8F7238] p-[1px] flex items-center justify-center shadow-lg shadow-[#C5A059]/20 group-hover:shadow-[#C5A059]/40 transition-all shrink-0">
-              <div className="w-full h-full bg-[#0A1220] rounded-[11px] p-1 flex items-center justify-center overflow-hidden">
-                <ManagedMedia
-                  mediaKey="visual_identity:site_logo"
-                  src={siteLogoSrc}
-                  onError={handleLogoError}
-                  alt="Logo Engª Jucélia Santana"
-                  context="visual_identity"
-                  loading="eager"
-                  decoding="sync"
-                  className="w-full h-full object-contain filter drop-shadow-[0_1px_4px_rgba(197,160,89,0.3)]"
-                  containerClassName="w-full h-full"
-                />
+            {/* Logo Brand */}
+            <a
+              href="#home"
+              onClick={(e) => handleDesktopNavClick(e, '#home', 'home')}
+              className="flex items-center gap-2.5 sm:gap-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C5A059] rounded-lg p-1 transition-all shrink-0 cursor-pointer"
+              aria-label={`${COMPANY_INFO.name} - Ir para o início`}
+            >
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-[#D4AF37] via-[#C5A059] to-[#8F7238] p-[1px] flex items-center justify-center shadow-lg shadow-[#C5A059]/20 group-hover:shadow-[#C5A059]/40 transition-all shrink-0">
+                <div className="w-full h-full bg-[#0A1220] rounded-[11px] p-1 flex items-center justify-center overflow-hidden">
+                  <ManagedMedia
+                    mediaKey="visual_identity:site_logo"
+                    src={siteLogoSrc}
+                    onError={handleLogoError}
+                    alt="Logo Engª Jucélia Santana"
+                    context="visual_identity"
+                    loading="eager"
+                    decoding="sync"
+                    className="w-full h-full object-contain filter drop-shadow-[0_1px_4px_rgba(197,160,89,0.3)]"
+                    containerClassName="w-full h-full"
+                  />
+                </div>
               </div>
-            </div>
-            <div className="flex flex-col shrink-0">
-              <span className="font-cinzel font-bold text-white text-xs sm:text-sm md:text-base tracking-wider group-hover:text-[#C5A059] transition-colors leading-tight">
-                JUCÉLIA SANTANA
-              </span>
-              <div className="flex items-center gap-1">
-                <span className="font-jakarta text-[8px] sm:text-[9px] tracking-widest text-[#C5A059] uppercase font-semibold">
-                  ENGENHEIRA CIVIL
+              <div className="flex flex-col shrink-0">
+                <span className="font-cinzel font-bold text-white text-xs sm:text-sm md:text-base tracking-wider group-hover:text-[#C5A059] transition-colors leading-tight">
+                  JUCÉLIA SANTANA
                 </span>
-                <span className="text-[8px] sm:text-[9px] text-slate-400 font-mono">| CREA-RO</span>
+                <div className="flex items-center gap-1">
+                  <span className="font-jakarta text-[8px] sm:text-[9px] tracking-widest text-[#C5A059] uppercase font-semibold">
+                    ENGENHEIRA CIVIL
+                  </span>
+                  <span className="text-[8px] sm:text-[9px] text-slate-400 font-mono">| CREA-RO</span>
+                </div>
               </div>
+            </a>
+
+            {/* Desktop Navigation Links */}
+            <nav className="hidden lg:flex items-center gap-1 xl:gap-2 shrink-0" role="navigation" aria-label="Navegação Principal">
+              {NAV_LINKS.map((link) => {
+                const isActive = activeSection === link.id;
+                return (
+                  <a
+                    key={link.name}
+                    href={link.href}
+                    onClick={(e) => handleDesktopNavClick(e, link.href, link.id)}
+                    className={`font-jakarta text-[10px] xl:text-xs uppercase tracking-wider font-semibold py-1.5 px-2 xl:px-2.5 rounded-xl transition-all relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C5A059] cursor-pointer ${
+                      isActive
+                        ? 'text-[#C5A059] bg-[#0A1220] border border-[#C5A059]/40 shadow-sm'
+                        : 'text-slate-300 hover:text-white hover:bg-white/5 border border-transparent'
+                    }`}
+                  >
+                    {link.name}
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeTabIndicator"
+                        className="absolute bottom-0 left-2 right-2 h-[2px] bg-[#C5A059] rounded-full"
+                        transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                      />
+                    )}
+                  </a>
+                );
+              })}
+            </nav>
+
+            {/* Right Action Controls (WhatsApp Quick Contact & Admin Link) */}
+            <div className="hidden lg:flex items-center gap-1.5 xl:gap-2.5 shrink-0">
+              <Link
+                to="/admin/dashboard"
+                title="Área Administrativa CMS"
+                aria-label="Abrir Painel Administrativo CMS"
+                className="px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-xl bg-[#0A1220] border border-[#C5A059]/40 text-[#C5A059] hover:bg-[#C5A059] hover:text-black transition-all font-jakarta text-[11px] xl:text-xs font-bold flex items-center gap-1.5 shadow-md shrink-0 cursor-pointer"
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Painel CMS</span>
+              </Link>
+
+              {/* WhatsApp Quick Icon Link */}
+              <a
+                href={whatsAppUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Falar pelo WhatsApp com Engenheira Jucélia Santana"
+                className="p-2 xl:p-2.5 rounded-xl bg-[#0A1220] border border-[#C5A059]/30 text-[#25D366] hover:bg-[#25D366] hover:text-black hover:border-[#25D366] transition-all transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C5A059] shrink-0"
+                title="Atendimento via WhatsApp"
+              >
+                <MessageCircle className="w-4 h-4 fill-current" />
+              </a>
             </div>
-          </a>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-1 xl:gap-2 shrink-0" role="navigation" aria-label="Navegação Principal">
-            {NAV_LINKS.map((link) => {
-              const isActive = activeSection === link.id;
-              return (
-                <a
-                  key={link.name}
-                  href={link.href}
-                  onClick={(e) => handleNavClick(e, link.href, link.id)}
-                  className={`font-jakarta text-[10px] xl:text-xs uppercase tracking-wider font-semibold py-1.5 px-2 xl:px-2.5 rounded-xl transition-all relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C5A059] ${
-                    isActive
-                      ? 'text-[#C5A059] bg-[#0A1220] border border-[#C5A059]/40 shadow-sm'
-                      : 'text-slate-300 hover:text-white hover:bg-white/5 border border-transparent'
-                  }`}
-                >
-                  {link.name}
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeTabIndicator"
-                      className="absolute bottom-0 left-2 right-2 h-[2px] bg-[#C5A059] rounded-full"
-                      transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                    />
-                  )}
-                </a>
-              );
-            })}
-          </nav>
+            {/* Mobile Menu Controls */}
+            <div className="flex lg:hidden items-center gap-2 shrink-0">
+              <Link
+                to="/admin/dashboard"
+                className="p-2 rounded-xl bg-[#0A1220] border border-[#C5A059]/40 text-[#C5A059] hover:bg-[#C5A059] hover:text-black transition-all text-xs font-bold cursor-pointer"
+                title="Painel CMS"
+              >
+                <ShieldCheck className="w-4 h-4" />
+              </Link>
+              {/* WhatsApp Mobile Quick Icon */}
+              <a
+                href={whatsAppUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded-xl bg-[#0A1220] border border-[#C5A059]/30 text-[#25D366] hover:bg-[#25D366]/20 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C5A059]"
+                aria-label="Contato via WhatsApp"
+              >
+                <MessageCircle className="w-5 h-5" />
+              </a>
 
-          {/* Right Action Controls (WhatsApp Quick Contact & Admin Link) */}
-          <div className="hidden lg:flex items-center gap-1.5 xl:gap-2.5 shrink-0">
-            <Link
-              to="/admin/dashboard"
-              title="Área Administrativa CMS"
-              aria-label="Abrir Painel Administrativo CMS"
-              className="px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-xl bg-[#0A1220] border border-[#C5A059]/40 text-[#C5A059] hover:bg-[#C5A059] hover:text-black transition-all font-jakarta text-[11px] xl:text-xs font-bold flex items-center gap-1.5 shadow-md shrink-0 cursor-pointer"
-            >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Painel CMS</span>
-            </Link>
+              {/* Hamburger Button */}
+              <button
+                ref={menuButtonRef}
+                type="button"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-2 text-slate-200 hover:text-[#C5A059] bg-[#0A1220] border border-white/10 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C5A059] transition-all cursor-pointer flex items-center gap-1.5"
+                aria-label={mobileMenuOpen ? 'Fechar Menu de Navegação' : 'Abrir Menu de Navegação'}
+                aria-expanded={mobileMenuOpen}
+                aria-controls="mobile-drawer"
+              >
+                <span className="font-jakarta text-[11px] uppercase tracking-widest font-bold text-slate-300 hidden sm:inline">
+                  {mobileMenuOpen ? 'Fechar' : 'Menu'}
+                </span>
+                {mobileMenuOpen ? <X className="w-5 h-5 text-[#C5A059]" /> : <Menu className="w-5 h-5" />}
+              </button>
+            </div>
 
-            {/* WhatsApp Quick Icon Link */}
-            <a
-              href={whatsAppUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Falar pelo WhatsApp com Engenheira Jucélia Santana"
-              className="p-2 xl:p-2.5 rounded-xl bg-[#0A1220] border border-[#C5A059]/30 text-[#25D366] hover:bg-[#25D366] hover:text-black hover:border-[#25D366] transition-all transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C5A059] shrink-0"
-              title="Atendimento via WhatsApp"
-            >
-              <MessageCircle className="w-4 h-4 fill-current" />
-            </a>
           </div>
+        </div>
+      </header>
 
-          {/* Mobile Menu Controls */}
-          <div className="flex lg:hidden items-center gap-2 shrink-0">
-            <Link
-              to="/admin/dashboard"
-              className="p-2 rounded-xl bg-[#0A1220] border border-[#C5A059]/40 text-[#C5A059] hover:bg-[#C5A059] hover:text-black transition-all text-xs font-bold cursor-pointer"
-              title="Painel CMS"
-            >
-              <ShieldCheck className="w-4 h-4" />
-            </Link>
-            {/* WhatsApp Mobile Quick Icon */}
-            <a
-              href={whatsAppUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 rounded-xl bg-[#0A1220] border border-[#C5A059]/30 text-[#25D366] hover:bg-[#25D366]/20 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C5A059]"
-              aria-label="Contato via WhatsApp"
-            >
-              <MessageCircle className="w-5 h-5" />
-            </a>
-
-            {/* Hamburger Button */}
+      {/* ========================================================================= */}
+      {/* MENU DRAWER MOBILE PÚBLICO VIA PORTAL                                     */}
+      {/* ========================================================================= */}
+      {mobileMenuOpen &&
+        createPortal(
+          <div className="fixed inset-0 z-[9999] lg:hidden pointer-events-none isolate">
+            {/* Backdrop Overlay Irmão */}
             <button
               type="button"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 text-slate-200 hover:text-[#C5A059] bg-[#0A1220] border border-white/10 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C5A059] transition-all cursor-pointer flex items-center gap-1.5"
-              aria-label={mobileMenuOpen ? 'Fechar Menu de Navegação' : 'Abrir Menu de Navegação'}
-              aria-expanded={mobileMenuOpen}
-              aria-controls="mobile-drawer"
-            >
-              <span className="font-jakarta text-[11px] uppercase tracking-widest font-bold text-slate-300 hidden sm:inline">
-                {mobileMenuOpen ? 'Fechar' : 'Menu'}
-              </span>
-              {mobileMenuOpen ? <X className="w-5 h-5 text-[#C5A059]" /> : <Menu className="w-5 h-5" />}
-            </button>
-          </div>
-
-        </div>
-      </div>
-
-      {/* Mobile Menu Drawer & Overlay */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <>
-            {/* Backdrop Overlay */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
+              aria-label="Fechar menu"
               onClick={() => setMobileMenuOpen(false)}
-              className="fixed inset-0 bg-black/85 backdrop-blur-md z-40 lg:hidden cursor-pointer"
-              aria-hidden="true"
+              className="absolute inset-0 z-0 bg-black/85 backdrop-blur-md pointer-events-auto touch-manipulation cursor-pointer border-none"
             />
 
             {/* Drawer Container */}
             <motion.div
               id="mobile-drawer"
+              ref={drawerRef}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Navegação principal do site"
+              tabIndex={-1}
               initial={{ opacity: 0, y: -15 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.25, ease: 'easeOut' }}
-              className="absolute top-full left-0 right-0 bg-[#0A1220]/98 border-b border-[#C5A059]/30 backdrop-blur-2xl z-50 lg:hidden shadow-2xl overflow-hidden"
+              className="
+                absolute top-0 left-0 right-0 z-10
+                max-h-[90vh] sm:max-h-[85vh]
+                bg-[#0A1220]/98
+                border-b border-[#C5A059]/30
+                backdrop-blur-2xl
+                pointer-events-auto touch-pan-y
+                shadow-2xl overflow-y-auto
+                focus:outline-none
+              "
             >
-              <div className="max-w-7xl mx-auto px-4 py-5 space-y-4 max-h-[85vh] overflow-y-auto">
-                {/* Mobile Drawer Header Brand Badge */}
-                <div className="flex items-center gap-3 p-3 bg-[#122038] border border-[#C5A059]/40 rounded-xl shadow-md">
-                  <div className="w-12 h-12 rounded-xl bg-[#0A1220] border border-[#C5A059]/50 p-1.5 flex items-center justify-center shrink-0 shadow-lg shadow-[#C5A059]/10 overflow-hidden">
-                    <ManagedMedia
-                      mediaKey="visual_identity:site_logo"
-                      src={siteLogoSrc}
-                      onError={handleLogoError}
-                      alt="Logo Jucélia Santana"
-                      context="visual_identity"
-                      loading="eager"
-                      decoding="sync"
-                      className="w-full h-full object-contain filter drop-shadow-[0_1px_4px_rgba(197,160,89,0.3)]"
-                      containerClassName="w-full h-full"
-                    />
+              <div className="max-w-7xl mx-auto px-4 py-5 space-y-4">
+                {/* Mobile Drawer Header Brand Badge com Botão de Fechar */}
+                <div className="flex items-center justify-between p-3 bg-[#122038] border border-[#C5A059]/40 rounded-xl shadow-md">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-xl bg-[#0A1220] border border-[#C5A059]/50 p-1.5 flex items-center justify-center shrink-0 shadow-lg shadow-[#C5A059]/10 overflow-hidden">
+                      <ManagedMedia
+                        mediaKey="visual_identity:site_logo"
+                        src={siteLogoSrc}
+                        onError={handleLogoError}
+                        alt="Logo Jucélia Santana"
+                        context="visual_identity"
+                        loading="eager"
+                        decoding="sync"
+                        className="w-full h-full object-contain filter drop-shadow-[0_1px_4px_rgba(197,160,89,0.3)]"
+                        containerClassName="w-full h-full"
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="font-cinzel font-bold text-white text-sm sm:text-base tracking-wider leading-tight">
+                        JUCÉLIA SANTANA
+                      </span>
+                      <span className="font-jakarta text-[10px] tracking-widest text-[#C5A059] uppercase font-bold mt-0.5">
+                        ENGENHEIRA CIVIL • CREA-RO 22430D
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex flex-col">
-                    <span className="font-cinzel font-bold text-white text-sm sm:text-base tracking-wider leading-tight">
-                      JUCÉLIA SANTANA
-                    </span>
-                    <span className="font-jakarta text-[10px] tracking-widest text-[#C5A059] uppercase font-bold mt-0.5">
-                      ENGENHEIRA CIVIL • CREA-RO 22430D
-                    </span>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setMobileMenuOpen(false)}
+                    aria-label="Fechar menu"
+                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center pointer-events-auto touch-manipulation"
+                  >
+                    <X className="w-5 h-5 text-[#C5A059]" />
+                  </button>
                 </div>
 
-                <nav className="flex flex-col space-y-1.5" aria-label="Navegação Mobile">
+                {/* Botões do Menu Mobile */}
+                <nav className="flex flex-col space-y-1.5 pointer-events-auto" aria-label="Navegação Mobile">
                   {NAV_LINKS.map((link) => {
                     const IconComponent = link.icon;
                     const isActive = activeSection === link.id;
                     return (
-                      <a
+                      <button
                         key={link.name}
-                        href={link.href}
-                        onClick={(e) => handleNavClick(e, link.href, link.id)}
-                        className={`font-jakarta text-xs sm:text-sm uppercase tracking-wider font-bold py-3 px-3.5 rounded-xl border transition-all flex items-center justify-between group shadow-sm min-h-[44px] ${
+                        type="button"
+                        onClick={() => handleMobileNavClick(link.id)}
+                        aria-current={isActive ? 'page' : undefined}
+                        className={`w-full min-h-[48px] pointer-events-auto touch-manipulation select-none text-left cursor-pointer font-jakarta text-xs sm:text-sm uppercase tracking-wider font-bold py-3 px-3.5 rounded-xl border transition-all flex items-center justify-between group shadow-sm ${
                           isActive
                             ? 'bg-[#122038] text-[#C5A059] border-[#C5A059]/40'
                             : 'bg-[#0E1729]/60 text-slate-200 hover:text-[#C5A059] border-white/5 hover:border-[#C5A059]/20'
@@ -381,38 +417,44 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAdmin }) => {
                         <ChevronRight className={`w-4 h-4 transition-all ${
                           isActive ? 'text-[#C5A059] translate-x-0.5' : 'text-slate-500 group-hover:text-[#C5A059] group-hover:translate-x-1'
                         }`} />
-                      </a>
+                      </button>
                     );
                   })}
                 </nav>
 
-                <div className="pt-3 space-y-2.5 border-t border-white/10">
+                {/* Ações do Rodapé do Drawer */}
+                <div className="pt-3 space-y-2.5 border-t border-white/10 pointer-events-auto">
                   <a
                     href={whatsAppUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center justify-center gap-2.5 w-full py-3.5 px-4 bg-[#122038] border border-[#25D366]/40 text-[#25D366] rounded-xl text-xs uppercase tracking-wider font-bold hover:bg-[#25D366] hover:text-black transition-all shadow-md min-h-[44px]"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      document.body.style.overflow = '';
+                    }}
+                    className="flex items-center justify-center gap-2.5 w-full py-3.5 px-4 bg-[#122038] border border-[#25D366]/40 text-[#25D366] rounded-xl text-xs uppercase tracking-wider font-bold hover:bg-[#25D366] hover:text-black transition-all shadow-md min-h-[48px] pointer-events-auto touch-manipulation"
                   >
                     <MessageCircle className="w-4.5 h-4.5" />
-                    Atendimento via WhatsApp
+                    <span>Atendimento via WhatsApp</span>
                   </a>
 
-                  <a
-                    href="#contato"
-                    onClick={(e) => handleNavClick(e, '#contato', 'contato')}
-                    className="block w-full"
+                  <Button
+                    type="button"
+                    size="md"
+                    variant="gold"
+                    fullWidth
+                    icon={<Phone className="w-4 h-4" />}
+                    onClick={() => handleMobileNavClick('contato')}
+                    className="min-h-[48px] touch-manipulation pointer-events-auto cursor-pointer"
                   >
-                    <Button size="md" variant="gold" fullWidth icon={<Phone className="w-4 h-4" />}>
-                      Solicitar Orçamento
-                    </Button>
-                  </a>
+                    Solicitar Orçamento
+                  </Button>
                 </div>
               </div>
             </motion.div>
-          </>
+          </div>,
+          document.body
         )}
-      </AnimatePresence>
-    </header>
+    </>
   );
 };

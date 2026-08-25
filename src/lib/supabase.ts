@@ -44,9 +44,9 @@ function getValidSupabaseKey(rawKey?: string, fallbackKey?: string): string {
   return DEFAULT_SUPABASE_ANON_KEY;
 }
 
-const rawEnvUrl = import.meta.env.VITE_SUPABASE_URL;
-const rawEnvKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const rawEnvPublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const rawEnvUrl = (import.meta as any)?.env?.VITE_SUPABASE_URL;
+const rawEnvKey = (import.meta as any)?.env?.VITE_SUPABASE_ANON_KEY;
+const rawEnvPublishableKey = (import.meta as any)?.env?.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 export const supabaseUrl = getValidSupabaseUrl(rawEnvUrl);
 export const supabaseAnonKey = getValidSupabaseKey(rawEnvKey, DEFAULT_SUPABASE_ANON_KEY);
@@ -75,7 +75,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
 });
 
 // Verificação técnica silenciosa de conexão com a infraestrutura Supabase
-if (import.meta.env.DEV) {
+if ((import.meta as any)?.env?.DEV) {
   supabase.auth.getSession().then(({ error }) => {
     if (error) {
       console.info('ℹ️ Conexão Supabase inicializada (Aguardando credenciais ativas no ambiente).');
