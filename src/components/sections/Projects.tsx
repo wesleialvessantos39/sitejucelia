@@ -11,6 +11,7 @@ import { ManagedMedia } from '../ui/ManagedMedia';
 import { getAssetUrl, handleStructuralPhotoError, handleStructuralVideoError } from '../../utils/assetUtils';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
+import { SmartText } from '../ui/SmartText';
 import { 
   MapPin, 
   Calendar, 
@@ -246,9 +247,11 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onOpenModal }) => {
             {project.title}
           </h3>
 
-          <p className="font-jakarta text-xs text-slate-400 line-clamp-2 leading-relaxed">
-            {project.description}
-          </p>
+          <SmartText
+            section="projects"
+            text={project.description}
+            className="font-jakarta text-xs text-slate-400 leading-relaxed"
+          />
         </div>
       </div>
 
@@ -608,9 +611,11 @@ export const Projects: React.FC = () => {
             </div>
 
             <div>
-              <p className="text-sm leading-relaxed text-slate-300 bg-[#0A1220]/50 p-4 rounded-xl border border-white/5">
-                {selectedProject.description}
-              </p>
+              <SmartText
+                section="projects"
+                text={selectedProject.description}
+                className="text-sm leading-relaxed text-slate-300 bg-[#0A1220]/50 p-4 rounded-xl border border-white/5"
+              />
             </div>
 
             {selectedProject.servicesExecuted && selectedProject.servicesExecuted.length > 0 && (

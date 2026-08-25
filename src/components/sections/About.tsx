@@ -10,6 +10,7 @@ import { supabaseDatabase } from '../../services/supabaseDatabase';
 import { useSiteContent } from '../../context/SiteContentContext';
 import { useMediaDisplay } from '../../context/MediaDisplayContext';
 import { ManagedMedia } from '../ui/ManagedMedia';
+import { SmartText } from '../ui/SmartText';
 import type { InstitutionalPhoto } from '../../types';
 import {
   ShieldCheck,
@@ -212,12 +213,14 @@ export const About: React.FC = () => {
             </div>
 
             <div className="space-y-4 text-slate-300 font-jakarta text-sm sm:text-base leading-relaxed">
-              <p>
-                {aboutContent.bioParagraph1 || 'Com sólida experiência em engenharia civil e atuação focada em Rondônia, a Engª Jucélia Santana desenvolve projetos estruturais de alta precisão e laudos cautelares NBR para empreendimentos residenciais, comerciais, industriais e do agronegócio.'}
-              </p>
-              <p>
-                {aboutContent.bioParagraph2 || 'Nossos projetos combinam precisão matemática, uso racional de insumos e conformidade rigorosa com as normas ABNT NBR 6118, NBR 6120 e NBR 13752. Garantimos total transparência, cumprimento de prazos e acompanhamento consultivo direto.'}
-              </p>
+              <SmartText
+                section="about"
+                text={aboutContent.bioParagraph1 || 'Com sólida experiência em engenharia civil e atuação focada em Rondônia, a Engª Jucélia Santana desenvolve projetos estruturais de alta precisão e laudos cautelares NBR para empreendimentos residenciais, comerciais, industriais e do agronegócio.'}
+              />
+              <SmartText
+                section="about"
+                text={aboutContent.bioParagraph2 || 'Nossos projetos combinam precisão matemática, uso racional de insumos e conformidade rigorosa com as normas ABNT NBR 6118, NBR 6120 e NBR 13752. Garantimos total transparência, cumprimento de prazos e acompanhamento consultivo direto.'}
+              />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
@@ -232,9 +235,11 @@ export const About: React.FC = () => {
                       {pillar.title}
                     </span>
                   </div>
-                  <p className="font-jakarta text-xs text-slate-300 leading-relaxed">
-                    {pillar.description}
-                  </p>
+                  <SmartText
+                    section="about"
+                    text={pillar.description}
+                    className="font-jakarta text-xs text-slate-300 leading-relaxed"
+                  />
                 </div>
               ))}
             </div>

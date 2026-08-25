@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { SectionHeader } from '../ui/SectionHeader';
 import { useSiteContent } from '../../context/SiteContentContext';
+import { SmartText } from '../ui/SmartText';
 import { ChevronDown, HelpCircle, MessageSquare } from 'lucide-react';
 import { COMPANY_INFO, getWhatsAppUrl, FAQ_DATA } from '../../data/companyData';
 import { FaqItemContent } from '../../types/content';
@@ -74,8 +75,12 @@ export const FAQ: React.FC = () => {
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.3 }}
                     >
-                      <div className="px-6 pb-6 pt-2 text-xs sm:text-sm text-slate-300 font-jakarta border-t border-white/5 leading-relaxed whitespace-pre-line">
-                        {faq.answer}
+                      <div className="px-6 pb-6 pt-2 border-t border-white/5">
+                        <SmartText
+                          section="faq"
+                          text={faq.answer}
+                          className="text-xs sm:text-sm text-slate-300 font-jakarta leading-relaxed whitespace-pre-line"
+                        />
                       </div>
                     </motion.div>
                   )}

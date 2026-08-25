@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Button } from '../ui/Button';
+import { SmartText } from '../ui/SmartText';
 import { getWhatsAppUrl, COMPANY_INFO, PROJECTS_DATA } from '../../data/companyData';
 import { useSiteContent } from '../../context/SiteContentContext';
 import { 
@@ -99,9 +100,11 @@ export const CTA: React.FC = () => {
               </h2>
 
               {/* Subtitle */}
-              <p className="font-jakarta text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl mx-auto lg:mx-0">
-                {ctaContent.subtitle || "Garanta a máxima segurança estrutural, conformidade rigorosa com normas ABNT e economia real em materiais para seu empreendimento."}
-              </p>
+              <SmartText
+                section="cta"
+                text={ctaContent.subtitle || "Garanta a máxima segurança estrutural, conformidade rigorosa com normas ABNT e economia real em materiais para seu empreendimento."}
+                className="font-jakarta text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl mx-auto lg:mx-0"
+              />
 
               {/* Buttons Area */}
               <div className="pt-2 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">

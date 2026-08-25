@@ -8,6 +8,7 @@ import { DomainProvider } from './context/DomainContext';
 import { SiteContentProvider } from './context/SiteContentContext';
 import { ContactSettingsProvider } from './context/ContactSettingsContext';
 import { MediaDisplayProvider } from './context/MediaDisplayContext';
+import { TextDisplayProvider } from './context/TextDisplayContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { preloadCriticalAssets } from './utils/preloadUtils';
 
@@ -57,10 +58,11 @@ export default function App() {
           <SiteContentProvider>
             <ContactSettingsProvider>
               <MediaDisplayProvider>
-                <BrowserRouter>
-                  <PageViewTracker />
-                  <Suspense fallback={<div className="min-h-screen bg-[#070D18]" />}>
-                    <Routes>
+                <TextDisplayProvider>
+                  <BrowserRouter>
+                    <PageViewTracker />
+                    <Suspense fallback={<div className="min-h-screen bg-[#070D18]" />}>
+                      <Routes>
                   {/* Rota Principal do Site Institucional - Exibe a IntroSplashScreen diretamente */}
                   <Route path="/" element={<Home />} />
 
@@ -116,7 +118,8 @@ export default function App() {
                 </Routes>
               </Suspense>
             </BrowserRouter>
-          </MediaDisplayProvider>
+          </TextDisplayProvider>
+        </MediaDisplayProvider>
         </ContactSettingsProvider>
         </SiteContentProvider>
         </DomainProvider>

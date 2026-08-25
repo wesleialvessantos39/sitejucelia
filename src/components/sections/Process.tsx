@@ -2,6 +2,7 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { SectionHeader } from '../ui/SectionHeader';
+import { SmartText } from '../ui/SmartText';
 import { useSiteContent } from '../../context/SiteContentContext';
 import { Button } from '../ui/Button';
 import { getWhatsAppUrl } from '../../data/companyData';
@@ -129,9 +130,11 @@ export const Process: React.FC = () => {
                     </h3>
 
                     {/* Description */}
-                    <p className="font-jakarta text-xs sm:text-sm text-slate-300 leading-relaxed mb-6">
-                      {step.description}
-                    </p>
+                    <SmartText
+                      section="process"
+                      text={step.description}
+                      className="font-jakarta text-xs sm:text-sm text-slate-300 leading-relaxed mb-6"
+                    />
                   </div>
 
                   {/* Deliverables List */}

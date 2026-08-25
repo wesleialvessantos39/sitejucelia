@@ -7,6 +7,7 @@ import { useVisualIdentity } from '../../context/VisualIdentityContext';
 import { useSiteContent } from '../../context/SiteContentContext';
 import { useContactSettings } from '../../context/ContactSettingsContext';
 import { ManagedMedia } from '../ui/ManagedMedia';
+import { SmartText } from '../ui/SmartText';
 import { 
   MapPin, 
   Phone, 
@@ -103,9 +104,11 @@ export const Footer: React.FC = () => {
                 </div>
               </div>
 
-              <p className="text-xs text-slate-400 font-jakarta leading-relaxed">
-                {footerContent.shortDescription || COMPANY_INFO.description}
-              </p>
+              <SmartText
+                section="footer"
+                text={footerContent.shortDescription || COMPANY_INFO.description}
+                className="text-xs text-slate-400 font-jakarta leading-relaxed"
+              />
 
               <div className="inline-flex items-center gap-2 px-3.5 py-2 bg-[#0E1729] border border-[#C5A059]/40 rounded-xl text-xs font-jakarta text-[#C5A059] shadow-inner">
                 <Award className="w-4 h-4 text-[#C5A059] shrink-0" />

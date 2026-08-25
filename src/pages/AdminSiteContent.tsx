@@ -23,10 +23,16 @@ import {
   X,
   ExternalLink
 } from 'lucide-react';
+import { TextDisplayManager } from '../components/admin/TextDisplayManager';
 
-type SectionKey = keyof SiteContentSettings;
+type SectionKey = keyof SiteContentSettings | 'text_display';
 
-const SECTION_LABELS: Record<SectionKey, { label: string; icon: string; description: string }> = {
+const SECTION_LABELS: Record<string, { label: string; icon: string; description: string }> = {
+  text_display: {
+    label: '✨ Exibição dos Textos (OE-SITE-001)',
+    icon: 'Sparkles',
+    description: 'Controle global de redução de altura de textos longos, limites de linhas por aparelho e botões de expansão.',
+  },
   hero: {
     label: 'Hero (Início)',
     icon: 'Layout',
@@ -205,51 +211,53 @@ export const AdminSiteContent: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setShowPreview(!showPreview)}
-            className={`px-4 py-2.5 rounded-xl text-xs font-semibold font-jakarta border transition-all flex items-center gap-2 ${
-              showPreview
-                ? 'bg-[#C5A059] text-black border-[#C5A059]'
-                : 'bg-[#0B1526] text-slate-300 border-white/10 hover:border-[#C5A059]/50'
-            }`}
-          >
-            <Eye className="w-4 h-4" />
-            <span>{showPreview ? 'Ocultar Prévia' : 'Pré-visualizar'}</span>
-          </button>
+        {activeTab !== 'text_display' && (
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setShowPreview(!showPreview)}
+              className={`px-4 py-2.5 rounded-xl text-xs font-semibold font-jakarta border transition-all flex items-center gap-2 ${
+                showPreview
+                  ? 'bg-[#C5A059] text-black border-[#C5A059]'
+                  : 'bg-[#0B1526] text-slate-300 border-white/10 hover:border-[#C5A059]/50'
+              }`}
+            >
+              <Eye className="w-4 h-4" />
+              <span>{showPreview ? 'Ocultar Prévia' : 'Pré-visualizar'}</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setIsResetModalOpen(true)}
-            className="px-4 py-2.5 rounded-xl text-xs font-semibold font-jakarta bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-all flex items-center gap-2"
-          >
-            <RotateCcw className="w-4 h-4" />
-            <span>Restaurar Padrão</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => setIsResetModalOpen(true)}
+              className="px-4 py-2.5 rounded-xl text-xs font-semibold font-jakarta bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-all flex items-center gap-2"
+            >
+              <RotateCcw className="w-4 h-4" />
+              <span>Restaurar Padrão</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={handleCancel}
-            className="px-4 py-2.5 rounded-xl text-xs font-semibold font-jakarta bg-[#0B1526] text-slate-300 border border-white/10 hover:border-slate-500 transition-all"
-          >
-            Cancelar Alterações
-          </button>
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="px-4 py-2.5 rounded-xl text-xs font-semibold font-jakarta bg-[#0B1526] text-slate-300 border border-white/10 hover:border-slate-500 transition-all"
+            >
+              Cancelar Alterações
+            </button>
 
-          <button
-            type="button"
-            onClick={() => handleSave()}
-            disabled={isSubmitting}
-            className="px-5 py-2.5 rounded-xl text-xs font-bold font-jakarta bg-gradient-to-r from-[#C5A059] to-[#A37F3E] text-black hover:opacity-90 transition-all shadow-lg shadow-[#C5A059]/20 flex items-center gap-2 disabled:opacity-50"
-          >
-            {isSubmitting ? (
-              <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
-            <span>Salvar Alterações</span>
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={() => handleSave()}
+              disabled={isSubmitting}
+              className="px-5 py-2.5 rounded-xl text-xs font-bold font-jakarta bg-gradient-to-r from-[#C5A059] to-[#A37F3E] text-black hover:opacity-90 transition-all shadow-lg shadow-[#C5A059]/20 flex items-center gap-2 disabled:opacity-50"
+            >
+              {isSubmitting ? (
+                <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              <span>Salvar Alterações</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Feedback Message */}
@@ -281,16 +289,16 @@ export const AdminSiteContent: React.FC = () => {
 
       {/* Section Navigation Tabs */}
       <div className="flex overflow-x-auto pb-2 gap-2 border-b border-white/10 scrollbar-thin">
-        {(Object.keys(SECTION_LABELS) as SectionKey[]).map((key) => {
+        {Object.keys(SECTION_LABELS).map((key) => {
           const isActive = activeTab === key;
           return (
             <button
               key={key}
               type="button"
-              onClick={() => setActiveTab(key)}
-              className={`px-4 py-2.5 rounded-xl text-xs font-semibold font-jakarta whitespace-nowrap transition-all flex items-center gap-2 border ${
+              onClick={() => setActiveTab(key as SectionKey)}
+              className={`px-4 py-2.5 rounded-xl text-xs font-semibold font-jakarta whitespace-nowrap transition-all flex items-center gap-2 border cursor-pointer ${
                 isActive
-                  ? 'bg-[#C5A059]/10 text-[#C5A059] border-[#C5A059]'
+                  ? 'bg-[#C5A059]/20 text-[#C5A059] border-[#C5A059] shadow-md shadow-[#C5A059]/10'
                   : 'bg-[#0B1526] text-slate-400 border-white/5 hover:border-white/20 hover:text-white'
               }`}
             >
@@ -300,24 +308,28 @@ export const AdminSiteContent: React.FC = () => {
         })}
       </div>
 
-      {/* Main Form & Preview Area */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
-        {/* Editor Form Column */}
-        <div className={showPreview ? 'lg:col-span-7 space-y-6' : 'lg:col-span-12 space-y-6'}>
-          <div className="bg-[#0B1526] border border-white/10 rounded-2xl p-6 sm:p-8 space-y-6">
-            <div className="border-b border-white/10 pb-4">
-              <h2 className="text-lg font-bold font-cinzel text-white flex items-center gap-2">
-                <Edit3 className="w-5 h-5 text-[#C5A059]" />
-                <span>Edição — {SECTION_LABELS[activeTab].label}</span>
-              </h2>
-              <p className="text-xs text-slate-400 font-jakarta mt-1">
-                {SECTION_LABELS[activeTab].description}
-              </p>
-            </div>
+      {/* Main Content Area */}
+      {activeTab === 'text_display' ? (
+        <TextDisplayManager />
+      ) : (
+        /* Main Form & Preview Area */
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* Editor Form Column */}
+          <div className={showPreview ? 'lg:col-span-7 space-y-6' : 'lg:col-span-12 space-y-6'}>
+            <div className="bg-[#0B1526] border border-white/10 rounded-2xl p-6 sm:p-8 space-y-6">
+              <div className="border-b border-white/10 pb-4">
+                <h2 className="text-lg font-bold font-cinzel text-white flex items-center gap-2">
+                  <Edit3 className="w-5 h-5 text-[#C5A059]" />
+                  <span>Edição — {SECTION_LABELS[activeTab]?.label || activeTab}</span>
+                </h2>
+                <p className="text-xs text-slate-400 font-jakarta mt-1">
+                  {SECTION_LABELS[activeTab]?.description || ''}
+                </p>
+              </div>
 
-            <form onSubmit={handleSave} className="space-y-6">
-              {Object.entries(currentSectionData).map(([field, value]) => {
+              <form onSubmit={handleSave} className="space-y-6">
+                {Object.entries(currentSectionData).map(([field, value]) => {
                 if (field === 'items' && Array.isArray(value)) {
                   return (
                     <div key={field} className="p-4 rounded-xl bg-[#070D18] border border-[#C5A059]/30 space-y-3">
@@ -493,6 +505,7 @@ export const AdminSiteContent: React.FC = () => {
           </div>
         )}
       </div>
+      )}
 
       {/* Confirmation Modal for Resetting Defaults */}
       {isResetModalOpen && (

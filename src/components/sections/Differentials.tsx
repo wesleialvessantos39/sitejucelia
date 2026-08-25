@@ -2,6 +2,7 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { SectionHeader } from '../ui/SectionHeader';
+import { SmartText } from '../ui/SmartText';
 import { getActiveDifferentials } from '../../data/differentials';
 import { useSiteContent } from '../../context/SiteContentContext';
 import { 
@@ -114,9 +115,11 @@ export const Differentials: React.FC = () => {
                   </h3>
 
                   {/* Objective Description */}
-                  <p className="font-jakarta text-xs sm:text-sm text-slate-400 leading-relaxed">
-                    {displayDesc}
-                  </p>
+                  <SmartText
+                    section="differentials"
+                    text={displayDesc}
+                    className="font-jakarta text-xs sm:text-sm text-slate-400 leading-relaxed"
+                  />
                 </div>
 
                 {/* Card Institutional Badge Footer */}

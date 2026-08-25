@@ -6,6 +6,7 @@ import { SERVICES_DATA, getWhatsAppUrl } from '../../data/companyData';
 import { ServiceItem } from '../../types';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
+import { SmartText } from '../ui/SmartText';
 import { useSiteContent } from '../../context/SiteContentContext';
 import { 
   Building2, 
@@ -153,9 +154,11 @@ export const Services: React.FC = () => {
                   </h3>
 
                   {/* Short Description */}
-                  <p className="font-jakarta text-xs sm:text-sm text-slate-300 leading-relaxed min-h-[54px]">
-                    {service.shortDescription}
-                  </p>
+                  <SmartText
+                    section="services"
+                    text={service.shortDescription}
+                    className="font-jakarta text-xs sm:text-sm text-slate-300 leading-relaxed min-h-[54px]"
+                  />
 
                   {/* Key Deliverables Highlights Preview */}
                   <div className="pt-3 border-t border-white/5 space-y-2">
@@ -277,9 +280,11 @@ export const Services: React.FC = () => {
             </div>
 
             {/* Comprehensive Description */}
-            <p className="text-sm sm:text-base leading-relaxed text-slate-200">
-              {selectedService.fullDescription}
-            </p>
+            <SmartText
+              section="services"
+              text={selectedService.fullDescription}
+              className="text-sm sm:text-base leading-relaxed text-slate-200"
+            />
 
             {/* Deliverables Checklist */}
             <div className="p-4 bg-[#0A1220] rounded-xl border border-white/10 space-y-3">

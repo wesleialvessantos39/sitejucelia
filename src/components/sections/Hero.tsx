@@ -20,6 +20,7 @@ import {
 import { supabaseDatabase } from '../../services/supabaseDatabase';
 import { useSiteContent } from '../../context/SiteContentContext';
 import { useMediaDisplay } from '../../context/MediaDisplayContext';
+import { SmartText } from '../ui/SmartText';
 import type { DashboardSlide } from '../../types';
 
 // Fotos de alta resolução como fallback seguro caso nenhum slide esteja cadastrado no Supabase
@@ -210,9 +211,11 @@ export const Hero: React.FC = () => {
                   {heroContent.titleHighlight || 'Soluções em Engenharia Civil'}
                 </span>
               </h1>
-              <p className="text-slate-200 font-jakarta text-base sm:text-lg leading-relaxed max-w-2xl font-normal">
-                {heroContent.description || 'Cálculo de estruturas, laudos periciais e acompanhamento de obras residenciais, comerciais e do agronegócio.'}
-              </p>
+              <SmartText
+                section="hero"
+                text={heroContent.description || 'Cálculo de estruturas, laudos periciais e acompanhamento de obras residenciais, comerciais e do agronegócio.'}
+                className="text-slate-200 font-jakarta text-base sm:text-lg leading-relaxed max-w-2xl font-normal"
+              />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 pb-1 font-jakarta text-xs sm:text-sm text-slate-100">

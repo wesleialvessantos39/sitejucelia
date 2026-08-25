@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { BookOpen, Calendar, User, ArrowRight, X, FileText, Tag, RefreshCw } from 'lucide-react';
 import { CMSBlogPost } from '../../types/cms';
 import { Button } from '../ui/Button';
+import { SmartText } from '../ui/SmartText';
 import { supabaseDatabase } from '../../services/supabaseDatabase';
 
 export const Blog: React.FC = () => {
@@ -109,9 +110,11 @@ export const Blog: React.FC = () => {
                       {post.title}
                     </h3>
 
-                    <p className="font-jakarta text-slate-300 text-xs sm:text-sm line-clamp-3 leading-relaxed">
-                      {post.summary}
-                    </p>
+                    <SmartText
+                      section="blog"
+                      text={post.summary}
+                      className="font-jakarta text-slate-300 text-xs sm:text-sm leading-relaxed"
+                    />
                   </div>
 
                   <div className="pt-2 border-t border-white/5">

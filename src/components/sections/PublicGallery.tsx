@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Image, Video, Film, Eye, X, Filter, Sparkles } from 'lucide-react';
+import { SmartText } from '../ui/SmartText';
 
 export interface PublicPost {
   id: string;
@@ -203,9 +204,11 @@ export const PublicGallery: React.FC = () => {
                       {item.title}
                     </h3>
                     {item.desc && (
-                      <p className="text-slate-300 font-jakarta text-xs leading-relaxed line-clamp-2">
-                        {item.desc}
-                      </p>
+                      <SmartText
+                        section="gallery"
+                        text={item.desc}
+                        className="text-slate-300 font-jakarta text-xs leading-relaxed"
+                      />
                     )}
                   </div>
                 </div>
@@ -251,9 +254,11 @@ export const PublicGallery: React.FC = () => {
 
               {selectedMedia.desc && (
                 <div className="p-4 bg-[#0A1220] border-t border-white/10">
-                  <p className="text-slate-300 font-jakarta text-xs sm:text-sm leading-relaxed">
-                    {selectedMedia.desc}
-                  </p>
+                  <SmartText
+                    section="gallery"
+                    text={selectedMedia.desc}
+                    className="text-slate-300 font-jakarta text-xs sm:text-sm leading-relaxed"
+                  />
                 </div>
               )}
             </div>

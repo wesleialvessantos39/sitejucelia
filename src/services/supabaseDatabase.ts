@@ -7,6 +7,8 @@ import type { MediaDisplaySetting, MediaDisplaySettingsMap } from '../types/medi
 import type { SiteDomain, CreateDomainInput, UpdateDomainInput } from '../types/domain';
 import { normalizeDomain, validateDomain, getDomainLookupVariants, formatDatabaseErrorMessage } from '../utils/domainUtils';
 import { DEFAULT_SITE_CONTENT } from '../data/defaultSiteContent';
+import type { TextDisplaySettings } from '../types/textDisplay';
+import { DEFAULT_TEXT_DISPLAY_SETTINGS, normalizeTextDisplaySettings } from '../data/defaultTextDisplaySettings';
 
 export type ProjectRow = Database['public']['Tables']['projects']['Row'];
 export type ProjectInsert = Database['public']['Tables']['projects']['Insert'];
@@ -976,6 +978,87 @@ A utilização de perfis laminados e treliças otimizadas garante economia no co
       console.error('[supabaseDatabase] Erro ao alterar status do item de FAQ:', err);
       throw err;
     }
+  },
+
+  // ==========================================
+  // GLOBAL INTELLIGENT TEXT DISPLAY (OE-SITE-001)
+  // ==========================================
+  async getTextDisplaySettings(): Promise<TextDisplaySettings> {
+    if (!isSupabaseConfigured) {
+      return DEFAULT_TEXT_DISPLAY_SETTINGS;
+    }
+    try {
+      const saved = await this.getSiteSetting('text_display_settings');
+      if (!saved) {
+        return DEFAULT_TEXT_DISPLAY_SETTINGS;
+      }
+      return normalizeTextDisplaySettings(saved);
+    } catch (err) {
+      console.warn('[supabaseDatabase] Erro ao buscar configurações de exibição de textos:', err);
+      return DEFAULT_TEXT_DISPLAY_SETTINGS;
+    }
+  },
+
+  async saveTextDisplaySettings(
+    settings: TextDisplaySettings,
+    userId?: string,
+    userEmail?: string
+  ): Promise<TextDisplaySettings> {
+    const normalized = normalizeTextDisplaySettings({
+      ...settings,
+      updatedAt: new Date().toISOString(),
+    });
+
+    await this.updateSiteSetting('text_display_settings', normalized, userId);
+
+    await this.logAdminAction({
+      action: 'UPDATE_TEXT_DISPLAY_SETTINGS',
+      entity_type: 'site_settings',
+      entity_id: 'text_display_settings',
+      details: {
+        enabled: normalized.enabled,
+        mode: normalized.mode,
+        automaticDetection: normalized.automaticDetection,
+        minimumCharacters: normalized.minimumCharacters,
+        mobileLines: normalized.mobileLines,
+        tabletLines: normalized.tabletLines,
+        desktopLines: normalized.desktopLines,
+        initiallyExpanded: normalized.initiallyExpanded,
+        showToggle: normalized.showToggle,
+        overridesCount: Object.keys(normalized.sectionOverrides || {}).length,
+        updated_by_email: userEmail || null,
+      },
+      user_id: userId || null,
+      user_email: userEmail || null,
+    });
+
+    return normalized;
+  },
+
+  async resetTextDisplaySettings(
+    userId?: string,
+    userEmail?: string
+  ): Promise<TextDisplaySettings> {
+    const initial = {
+      ...DEFAULT_TEXT_DISPLAY_SETTINGS,
+      updatedAt: new Date().toISOString(),
+    };
+
+    await this.updateSiteSetting('text_display_settings', initial, userId);
+
+    await this.logAdminAction({
+      action: 'RESET_TEXT_DISPLAY_SETTINGS',
+      entity_type: 'site_settings',
+      entity_id: 'text_display_settings',
+      details: {
+        message: 'Configurações de exibição de textos restauradas para os padrões de fábrica',
+        updated_by_email: userEmail || null,
+      },
+      user_id: userId || null,
+      user_email: userEmail || null,
+    });
+
+    return initial;
   },
 
   // ==========================================
