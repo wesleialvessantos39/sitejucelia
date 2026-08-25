@@ -68,6 +68,10 @@ import type {
   RestoreResult,
 } from '../types/backup';
 import { calculateNextScheduledBackup, WEEKDAYS, TIMEZONES } from '../utils/scheduleCalculator';
+import {
+  shouldUseSameTabForGoogleOAuth,
+  getValidatedGoogleOAuthAuthorizationUrl,
+} from '../utils/googleDriveOAuth';
 
 export default function AdminBackups() {
   const { user, profile } = useAuth();
@@ -349,7 +353,7 @@ export default function AdminBackups() {
     };
   }, []);
 
-  // Iniciar Conexão OAuth com Google Drive (Janela Externa Top-Level + Polling Server-Side)
+  // Iniciar Conexão OAuth com Google Drive (Adaptativo: Mobile na mesma aba, Desktop em popup com fallback)
   const handleConnectGoogleDrive = async () => {
     if (connecting) return;
     setConnecting(true);
@@ -381,45 +385,39 @@ export default function AdminBackups() {
     // Fecha modal de troca de conta se estiver aberto
     setIsSwitchAccountModalOpen(false);
 
-    // Detecção de contexto adaptativo
-    const isMobile =
-      typeof window !== 'undefined' &&
-      (window.matchMedia('(max-width: 768px)').matches ||
-        /Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
-
-    // 4. Cria a janela/aba externa sincronamente a partir do gesto de clique do usuário
-    const width = 600;
-    const height = 760;
-    const left = typeof window !== 'undefined' ? window.screenX + (window.outerWidth - width) / 2 : 0;
-    const top = typeof window !== 'undefined' ? window.screenY + (window.outerHeight - height) / 2 : 0;
+    // 2. Detectar mobile usando matchesMobileViewport e userAgent
+    const matchesMobileViewport =
+      typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches;
+    const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+    const useSameTab = shouldUseSameTabForGoogleOAuth(matchesMobileViewport, userAgent);
 
     let oauthWindow: Window | null = null;
-    try {
-      oauthWindow = window.open(
-        'about:blank',
-        isMobile ? '_blank' : 'google-drive-oauth',
-        isMobile ? undefined : `width=${width},height=${height},left=${left},top=${top},status=no,resizable=yes,scrollbars=yes`
-      );
-    } catch (openErr) {
-      console.warn('[AdminBackups] Falha ao abrir janela inicial:', openErr);
+
+    // 4. Em desktop: abrir o popup sincronamente a partir do clique
+    if (!useSameTab) {
+      const width = 600;
+      const height = 760;
+      const left = typeof window !== 'undefined' ? window.screenX + (window.outerWidth - width) / 2 : 0;
+      const top = typeof window !== 'undefined' ? window.screenY + (window.outerHeight - height) / 2 : 0;
+
+      try {
+        oauthWindow = window.open(
+          'about:blank',
+          'google-drive-oauth',
+          `width=${width},height=${height},left=${left},top=${top},status=no,resizable=yes,scrollbars=yes`
+        );
+      } catch (openErr) {
+        console.warn('[AdminBackups] Falha ao abrir popup desktop inicial:', openErr);
+      }
+
+      oauthPopupRef.current = oauthWindow;
     }
 
-    // Tratamento caso a janela tenha sido bloqueada pelo navegador
-    if (!oauthWindow || oauthWindow.closed || typeof oauthWindow.closed === 'undefined') {
-      setErrorMessage(
-        'A janela de autorização do Google foi bloqueada pelo navegador. Permita popups para este site ou abra o aplicativo fora do preview e tente novamente.'
-      );
-      setConnecting(false);
-      return;
-    }
-
-    oauthPopupRef.current = oauthWindow;
-
     try {
-      // 5. Chamar Edge Function / endpoint server-side para gerar URL oficial de autorização do Google
+      // 3/4. Manter a página original ativa enquanto backupService.getGoogleDriveAuthUrl busca a URL
       const authRes = await backupService.getGoogleDriveAuthUrl(user?.id, user?.email);
 
-      // 6. Se não estiver configurado no servidor, fechar janela e apresentar mensagem amigável
+      // 6. Se authRes.configured for falso ou não existir authRes.url:
       if (!authRes.configured || !authRes.url) {
         if (oauthWindow && !oauthWindow.closed) {
           try {
@@ -428,16 +426,33 @@ export default function AdminBackups() {
         }
         oauthPopupRef.current = null;
         setErrorMessage(
-          'Não foi possível iniciar a conexão com o Google Drive. A integração precisa ser configurada pelo administrador técnico do sistema.'
+          authRes.message ||
+            'Não foi possível iniciar a conexão com o Google Drive. A integração precisa ser configurada pelo administrador técnico do sistema.'
         );
         setConnecting(false);
         return;
       }
 
-      // 7. Navega a janela externa top-level para a URL de autorização oficial do Google
-      oauthWindow.location.href = authRes.url;
+      // 7. Validar URL recebida com getValidatedGoogleOAuthAuthorizationUrl (HTTPS e accounts.google.com)
+      const validatedAuthUrl = getValidatedGoogleOAuthAuthorizationUrl(authRes.url);
 
-      // 8. Inicia Polling server-side de action=status (a cada 1000ms, máx 120s)
+      // 3 & 9. Em celulares e tablets: executar window.location.assign e retornar imediatamente
+      if (useSameTab) {
+        window.location.assign(validatedAuthUrl);
+        return;
+      }
+
+      // 5. Em desktop se o popup foi bloqueado: utilizar automaticamente a mesma aba com window.location.assign
+      if (!oauthWindow || oauthWindow.closed || typeof oauthWindow.closed === 'undefined') {
+        oauthPopupRef.current = null;
+        window.location.assign(validatedAuthUrl);
+        return;
+      }
+
+      // 4. Em desktop com popup aberto: navegar o popup usando oauthWindow.location.replace(authUrl)
+      oauthWindow.location.replace(validatedAuthUrl);
+
+      // 8. Preservar o polling existente no desktop
       let elapsedSeconds = 0;
       const maxSeconds = 120;
 

@@ -9,6 +9,7 @@
     "start": "node dist/server.cjs",
     "preview": "vite preview",
     "lint": "tsc --noEmit",
+    "test": "node --import tsx --test src/**/*.test.ts",
     "deploy:functions": "supabase functions deploy google-drive-oauth --project-ref mnupdwlmgcratpfgypik --no-verify-jwt"
   },
   "dependencies": {

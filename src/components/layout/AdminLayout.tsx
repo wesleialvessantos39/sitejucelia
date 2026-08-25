@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   Building2,
@@ -39,11 +40,47 @@ export default function AdminLayout() {
   const { settings, getEffectiveAsset } = useVisualIdentity();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLElement>(null);
 
   // Fecha o drawer automaticamente ao mudar de rota
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
+
+  // Controle de scroll do body, tecla Escape e foco acessível do drawer mobile
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+
+      // Move o foco para o drawer ao abrir
+      const focusTimer = setTimeout(() => {
+        drawerRef.current?.focus();
+      }, 50);
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          setMobileMenuOpen(false);
+        }
+      };
+
+      window.addEventListener('keydown', handleKeyDown);
+
+      return () => {
+        clearTimeout(focusTimer);
+        document.body.style.overflow = originalOverflow;
+        window.removeEventListener('keydown', handleKeyDown);
+        // Devolve o foco ao botão que abriu o menu
+        menuButtonRef.current?.focus();
+      };
+    }
+  }, [mobileMenuOpen]);
+
+  const handleMobileNavigation = (path: string) => {
+    navigate(path);
+    setMobileMenuOpen(false);
+  };
 
   const adminIconSrc = getEffectiveAsset
     ? getEffectiveAsset('admin_sidebar_icon')
@@ -262,10 +299,12 @@ export default function AdminLayout() {
           <div className="flex items-center gap-3">
             {/* Mobile / Tablet Menu Toggle */}
             <button
+              ref={menuButtonRef}
               type="button"
               onClick={() => setMobileMenuOpen(true)}
               className="lg:hidden p-2 rounded-xl bg-[#122038] border border-white/10 text-slate-200 hover:text-[#C5A059] transition-all flex items-center justify-center shrink-0 cursor-pointer"
               aria-label="Abrir Menu de Navegação"
+              aria-expanded={mobileMenuOpen}
             >
               <Menu className="w-5 h-5" />
             </button>
@@ -334,131 +373,137 @@ export default function AdminLayout() {
       </div>
 
       {/* ========================================================================= */}
-      {/* 3. MENU DRAWER LATERAL MOBILE / TABLET                                   */}
+      {/* 3. MENU DRAWER LATERAL MOBILE / TABLET VIA PORTAL                        */}
       {/* ========================================================================= */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 z-[100] lg:hidden isolate">
-          {/* Backdrop absoluto com fechamento ao toque */}
-          <button
-            type="button"
-            aria-label="Fechar menu"
-            onClick={() => setMobileMenuOpen(false)}
-            className="absolute inset-0 z-0 bg-black/80 backdrop-blur-sm"
-          />
+      {mobileMenuOpen &&
+        createPortal(
+          <div className="fixed inset-0 z-[9999] lg:hidden pointer-events-none">
+            {/* Backdrop irmão do aside */}
+            <button
+              type="button"
+              aria-label="Fechar menu"
+              onClick={() => setMobileMenuOpen(false)}
+              className="absolute inset-0 z-0 bg-black/80 backdrop-blur-sm pointer-events-auto touch-manipulation"
+            />
 
-          {/* Drawer Menu com z-10 acima do backdrop */}
-          <aside
-            role="dialog"
-            aria-modal="true"
-            aria-label="Navegação administrativa"
-            className="
-              absolute inset-y-0 left-0 z-10
-              w-[min(20rem,88vw)]
-              bg-[#0B1526]
-              border-r border-white/10
-              overflow-y-auto
-              overscroll-contain
-              pointer-events-auto
-              p-5 flex flex-col justify-between shadow-2xl
-            "
-          >
-            <div className="space-y-5">
-              {/* Drawer Header */}
-              <div className="flex items-center justify-between pb-4 border-b border-white/10">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-[#C5A059] text-black flex items-center justify-center font-bold overflow-hidden p-1 shrink-0 shadow-md">
-                    {adminIconSrc ? (
-                      <ManagedMedia
-                        mediaKey="visual_identity:admin_sidebar_icon"
-                        src={adminIconSrc}
-                        alt="Ícone do Menu"
-                        context="visual_identity"
-                        className="w-full h-full object-contain"
-                        containerClassName="w-full h-full"
-                      />
-                    ) : (
-                      <Building2 className="w-5 h-5" />
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="font-extrabold text-white text-sm font-serif">JUCÉLIA SANTANA</h3>
-                    <p className="text-[10px] text-[#C5A059] uppercase tracking-wider font-semibold">Painel Administrativo</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center"
-                  aria-label="Fechar menu"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Grouped Navigation Links (Links Nativos HTML) */}
-              <nav className="space-y-5 relative z-20 pointer-events-auto">
-                {navGroups.map((group) => (
-                  <div key={group.groupName} className="space-y-1.5">
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#C5A059] block px-2">
-                      {group.groupName}
-                    </span>
-                    <div className="space-y-1">
-                      {group.items.map((item) => {
-                        const Icon = item.icon;
-                        const isActive = location.pathname === item.path;
-                        return (
-                          <a
-                            key={item.path}
-                            href={item.path}
-                            aria-current={isActive ? 'page' : undefined}
-                            className={`relative z-20 w-full min-h-[48px] flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold pointer-events-auto touch-manipulation transition-all ${
-                              isActive
-                                ? 'bg-[#C5A059] text-black font-bold shadow-md'
-                                : 'text-slate-300 hover:text-white hover:bg-white/5'
-                            }`}
-                          >
-                            <Icon
-                              aria-hidden="true"
-                              className={`w-4 h-4 shrink-0 ${
-                                isActive ? 'text-black' : 'text-[#C5A059]'
-                              }`}
-                            />
-                            <span>{item.label}</span>
-                          </a>
-                        );
-                      })}
+            {/* Aside do Drawer com z-10 acima do backdrop */}
+            <aside
+              ref={drawerRef}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Navegação administrativa"
+              tabIndex={-1}
+              className="
+                absolute inset-y-0 left-0 z-10
+                w-[min(20rem,88vw)] h-[100dvh]
+                bg-[#0B1526]
+                border-r border-white/10
+                overflow-y-auto
+                overscroll-contain
+                pointer-events-auto touch-pan-y
+                p-5 flex flex-col justify-between shadow-2xl
+                focus:outline-none
+              "
+            >
+              <div className="space-y-5">
+                {/* Drawer Header */}
+                <div className="flex items-center justify-between pb-4 border-b border-white/10">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-[#C5A059] text-black flex items-center justify-center font-bold overflow-hidden p-1 shrink-0 shadow-md">
+                      {adminIconSrc ? (
+                        <ManagedMedia
+                          mediaKey="visual_identity:admin_sidebar_icon"
+                          src={adminIconSrc}
+                          alt="Ícone do Menu"
+                          context="visual_identity"
+                          className="w-full h-full object-contain"
+                          containerClassName="w-full h-full"
+                        />
+                      ) : (
+                        <Building2 className="w-5 h-5" />
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="font-extrabold text-white text-sm font-serif">JUCÉLIA SANTANA</h3>
+                      <p className="text-[10px] text-[#C5A059] uppercase tracking-wider font-semibold">Painel Administrativo</p>
                     </div>
                   </div>
-                ))}
-              </nav>
-            </div>
+                  <button
+                    type="button"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center pointer-events-auto touch-manipulation"
+                    aria-label="Fechar menu"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
 
-            {/* Drawer Footer Actions */}
-            <div className="pt-5 border-t border-white/10 space-y-2 shrink-0 relative z-20 pointer-events-auto">
-              <a
-                href="/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full min-h-[48px] flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#122038] border border-[#C5A059]/40 text-xs font-bold text-[#C5A059] hover:bg-[#C5A059] hover:text-black transition-all touch-manipulation pointer-events-auto"
-              >
-                <Eye className="w-4 h-4" />
-                <span>Ver Site Público</span>
-              </a>
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  handleLogout();
-                }}
-                className="w-full min-h-[48px] flex items-center justify-center gap-2 py-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs font-bold text-rose-400 hover:bg-rose-500/20 transition-all cursor-pointer touch-manipulation pointer-events-auto"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Encerrar Sessão</span>
-              </button>
-            </div>
-          </aside>
-        </div>
-      )}
+                {/* Grouped Navigation Buttons (Navegação explícita via React Router) */}
+                <nav className="space-y-5 relative z-20 pointer-events-auto">
+                  {navGroups.map((group) => (
+                    <div key={group.groupName} className="space-y-1.5">
+                      <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#C5A059] block px-2">
+                        {group.groupName}
+                      </span>
+                      <div className="space-y-1">
+                        {group.items.map((item) => {
+                          const Icon = item.icon;
+                          const isActive = location.pathname === item.path;
+                          return (
+                            <button
+                              key={item.path}
+                              type="button"
+                              onClick={() => handleMobileNavigation(item.path)}
+                              aria-current={isActive ? 'page' : undefined}
+                              className={`w-full min-h-[48px] flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold pointer-events-auto touch-manipulation transition-all text-left ${
+                                isActive
+                                  ? 'bg-[#C5A059] text-black font-bold shadow-md'
+                                  : 'text-slate-300 hover:text-white hover:bg-white/5'
+                              }`}
+                            >
+                              <Icon
+                                aria-hidden="true"
+                                className={`w-4 h-4 shrink-0 ${
+                                  isActive ? 'text-black' : 'text-[#C5A059]'
+                                }`}
+                              />
+                              <span className="truncate">{item.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </nav>
+              </div>
+
+              {/* Drawer Footer Actions */}
+              <div className="pt-5 border-t border-white/10 space-y-2 shrink-0 relative z-20 pointer-events-auto">
+                <a
+                  href="/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full min-h-[48px] flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#122038] border border-[#C5A059]/40 text-xs font-bold text-[#C5A059] hover:bg-[#C5A059] hover:text-black transition-all touch-manipulation pointer-events-auto"
+                >
+                  <Eye className="w-4 h-4" />
+                  <span>Ver Site Público</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    handleLogout();
+                  }}
+                  className="w-full min-h-[48px] flex items-center justify-center gap-2 py-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs font-bold text-rose-400 hover:bg-rose-500/20 transition-all cursor-pointer touch-manipulation pointer-events-auto"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Encerrar Sessão</span>
+                </button>
+              </div>
+            </aside>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
